@@ -4,8 +4,9 @@ import { Environment, OrbitControls } from "@react-three/drei";
 import { useState } from "react";
 import ModelTextureTransition from "./components/ModelTextureTransition";
 import ModelOnBeforeShader from "./components/ModelOnBeforeShader";
+import CheckPBRShader from "./components/CheckPBRShader";
 
-const step = [1, 2, 3]
+const step = [1, 2, 3, 4]
 
 export default function App() {
   const [isClick, setClick] = useState(false)
@@ -72,9 +73,13 @@ export default function App() {
         {pageStep === 3 &&
           <ModelOnBeforeShader isClick={isClick} />
         }
+        {pageStep === 4 &&
+          <CheckPBRShader isClick={isClick} />
+        }
 
         <OrbitControls />
-        <Environment preset="park" />
+        <Environment preset="city" />
+
       </Canvas>
     </div>
   );

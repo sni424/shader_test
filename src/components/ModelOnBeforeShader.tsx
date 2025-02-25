@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { GLTFLoader } from 'three/examples/jsm/Addons.js'
-import table from "/table.glb?url"
+import table from "/scene1.glb?url"
 import * as THREE from "three"
 
 import image1 from "/Image_0.jpg?url"
@@ -33,7 +33,7 @@ const ModelOnBeforeShader = ({ isClick }: { isClick: boolean }) => {
                 const texture2 = new THREE.TextureLoader().load(image2);
                 texture1.flipY = false;
                 texture2.flipY = false;
-
+                clonedMat.map = texture1
                 clonedMat.onBeforeCompile = (shader) => {
                     shader.uniforms.progress = { value: progressRef.current.value };
                     shader.uniforms.texture1 = { value: texture1 };
@@ -48,12 +48,12 @@ const ModelOnBeforeShader = ({ isClick }: { isClick: boolean }) => {
                     shader.fragmentShader = shader.fragmentShader.replace(
                         '#include <map_fragment>',
                         `
-                        #ifdef USE_MAP
+                     
                             vec4 texColor1 = texture2D(texture1, vMapUv);
                             vec4 texColor2 = texture2D(texture2, vMapUv);
                             vec4 mixedTexColor = mix(texColor1, texColor2, progress);
                             diffuseColor *= mixedTexColor;
-                        #endif
+                      
                         `
                     );
 
@@ -86,6 +86,9 @@ const ModelOnBeforeShader = ({ isClick }: { isClick: boolean }) => {
                 ease: "power1.inOut",
                 onUpdate: function () {
                     foundMesh!.material.shader.uniforms.progress.value = progressRef.current.value;
+                },
+                onComplete: function () {
+                    console.log("  foundMesh.material", foundMesh.material)
                 }
             });
         }
