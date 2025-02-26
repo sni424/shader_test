@@ -5,8 +5,9 @@ import { useState } from "react";
 import ModelTextureTransition from "./components/ModelTextureTransition";
 import ModelOnBeforeShader from "./components/ModelOnBeforeShader";
 import CheckPBRShader from "./components/CheckPBRShader";
+import CheckLightMap from "./components/checkLightMap";
 
-const step = [1, 2, 3, 4]
+const step = [1, 2, 3, 4, 5]
 
 export default function App() {
   const [isClick, setClick] = useState(false)
@@ -74,11 +75,17 @@ export default function App() {
           <ModelOnBeforeShader isClick={isClick} />
         }
         {pageStep === 4 &&
+          <CheckLightMap isClick={isClick} />
+        }
+        {pageStep === 5 &&
           <CheckPBRShader isClick={isClick} />
         }
 
+
         <OrbitControls />
-        <Environment preset="city" />
+        {pageStep !== 4 && <Environment preset="city" />}
+
+
 
       </Canvas>
     </div>
