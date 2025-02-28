@@ -5,7 +5,7 @@ import { useState } from "react";
 import ModelTextureTransition from "./components/ModelTextureTransition";
 import ModelOnBeforeShader from "./components/ModelOnBeforeShader";
 import CheckPBRShader from "./components/CheckPBRShader";
-import CheckLightMap from "./components/checkLightMap";
+import CheckLightMap from "./components/CheckLightMap";
 
 const step = [1, 2, 3, 4, 5]
 
