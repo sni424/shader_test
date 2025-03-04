@@ -17,12 +17,14 @@ const ModelTextureTransition = ({ isClick }: { isClick: boolean }) => {
 
     useEffect(() => {
         const loader = new GLTFLoader();
+
         loader.load(table, (gltf) => {
             setGltfScene(gltf.scene);
         });
     }, []);
 
     useEffect(() => {
+
         if (!gltfScene) return;
 
         gltfScene.traverse((child) => {
