@@ -10,11 +10,16 @@ import CheckDimensions from "./components/CheckDimensions";
 import CanvasClickEvent from "./components/CanvasClickEvent";
 import PointMark from "./components/PointMark";
 
-const step = [1, 2, 3, 4, 5, 6]
+import DimensionComplete from "./components/DimensionComplete";
+import PredrawnLine from "./components/PredrawnLine";
 
+const step = [1, 2, 3, 4, 5, 6, 7]
+
+const roomButton = ["거실", "주방", "드레스룸"]
 export default function App() {
   const [isClick, setClick] = useState(false)
   const [dimensionsClick, setDimensionsClick] = useState(false)
+  const [room, setRoom] = useState<string>("거실")
   const [pageStep, setPageStep] = useState(1)
   const clickFun = () => {
     setClick(pre => !pre)
@@ -68,22 +73,57 @@ export default function App() {
       >
         전환하기
       </button>
-      <button
-        style={{
-          position: "absolute",
-          top: "20px",
-          left: "140px",
-          padding: "10px 20px",
-          fontSize: "16px",
-          zIndex: "10",
-          cursor: "pointer"
-        }}
-        onClick={() => {
-          setDimensionsClick(pre => !pre)
-        }}
-      >
-        {dimensionsClick ? "측정취소" : "거리측정"}
-      </button>
+      {pageStep === 1 || pageStep === 6 ?
+        <button
+          style={{
+            position: "absolute",
+            top: "20px",
+            left: "140px",
+            padding: "10px 20px",
+            fontSize: "16px",
+            zIndex: "10",
+            cursor: "pointer"
+          }}
+          onClick={() => {
+            setDimensionsClick(pre => !pre)
+          }}
+        >
+          {dimensionsClick ? "측정취소" : "거리측정"}
+        </button>
+        : null}
+      {dimensionsClick &&
+        <ul
+          style={{
+            position: "absolute",
+            bottom: "0",
+            zIndex: "10",
+            display: "flex",
+            alignItems: "center",
+            listStyle: "none",
+            gap: "8px",
+            left: "50%",
+            transform: "translateX(-50%)",
+          }}
+        >
+          {roomButton.map((child, index) => {
+            return (
+              <li key={`lineButton_key_${index}`}>
+                <button
+                  style={{
+                    cursor: "pointer"
+                  }}
+                  onClick={() => {
+                    setRoom(child)
+                  }}
+                >
+                  {child}
+                </button>
+              </li>
+            )
+          })}
+        </ul>
+      }
+
       <div id="canvasDiv"
         style={{
           width: "100%",
@@ -91,7 +131,8 @@ export default function App() {
         }}
       >
         <Canvas>
-          {pageStep === 1 &&
+          {pageStep === 1 && <DimensionComplete />}
+          {pageStep === 7 &&
             <ModelTextureTransition isClick={isClick} />
           }
           {pageStep === 2 &&
@@ -110,12 +151,20 @@ export default function App() {
             <CheckDimensions />
           }
 
+          {pageStep === 1 && <PredrawnLine dimensionsClick={dimensionsClick}
+            room={room}
+          />}
 
-          <CanvasClickEvent dimensionsClick={dimensionsClick} />
           <OrbitControls />
-          <PointMark />
-          {pageStep !== 4 && <Environment preset="city" />}
 
+          {pageStep !== 4 && <Environment preset="city" />}
+          {pageStep === 6 &&
+            <>
+              <PointMark />
+              {/* <LineComponent /> */}
+              <CanvasClickEvent dimensionsClick={dimensionsClick} />
+            </>
+          }
 
 
         </Canvas>
