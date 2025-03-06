@@ -1,80 +1,67 @@
-import { useAtomValue } from 'jotai';
-import { useEffect } from 'react'
-import { firstVectorAtom } from '../utils.ts/atom';
+import { useAtom } from 'jotai';
+import { useEffect, useState } from 'react'
+import { dotAtom } from '../utils/atom';
 import * as THREE from "three"
 import { useThree } from '@react-three/fiber';
+import { deleteDot } from '../utils/collectFun';
 
 const PointMark = () => {
     const { scene } = useThree()
-    const firstClickVector = useAtomValue(firstVectorAtom)
+    const [dotPoints] = useAtom(dotAtom)
+
+    const [pointArray, setPointArray] = useState<{
+        position: THREE.Vector3;
+        normal: THREE.Vector3;
+    }[]>([])
 
     useEffect(() => {
-        if (!firstClickVector || !scene) return;
-
-        // scene이 유효한 객체인지 추가 확인
-        if (!(scene instanceof THREE.Scene)) {
-            console.error('Invalid scene object', scene);
-            return;
-        }
-
-        const geometry = new THREE.CircleGeometry(1, 32);
-        const material = new THREE.MeshBasicMaterial({ color: 0xffff00, side: THREE.DoubleSide });
-        const circle = new THREE.Mesh(geometry, material);
-
-        const newPointTarget = firstClickVector.position.clone().add(
-            new THREE.Vector3(
-                firstClickVector.normal.x,
-                firstClickVector.normal.y,
-                firstClickVector.normal.z
-            ).multiplyScalar(0.01)
-        );
-
-        circle.position.copy(newPointTarget);
-        circle.scale.set(0.05, 0.05, 0.05);
-        circle.lookAt(firstClickVector.position.clone().add(firstClickVector.normal));
-
-        // 안전한 scene 추가 방식
-        if (scene.add) {
-            scene.add(circle);
-        } else {
-            console.error('scene.add method is not available', scene);
-            return;
-        }
-
-        circle.name = `circle.${circle.uuid}`;
-
-        return () => {
-            if (scene && scene.children) {
-                const circlesToRemove = scene.children.filter(
-                    item => item.name && item.name.includes("circle")
-                );
-                circlesToRemove.forEach((circle) => {
-                    const mesh = circle as THREE.Mesh;
-
-                    scene.remove(mesh);
-
-                    if (mesh.geometry) {
-                        mesh.geometry.dispose();
-                    }
-
-                    if (mesh.material) {
-                        if (Array.isArray(mesh.material)) {
-                            mesh.material.forEach(mat => {
-                                if ('dispose' in mat) {
-                                    mat.dispose();
-                                }
-                            });
-                        } else if ('dispose' in mesh.material) {
-
-                            (mesh.material as THREE.Material).dispose();
-                        }
-                    }
-                });
+        if (dotPoints) {
+            if (pointArray.length >= 2) {
+                deleteDot(scene);
+                setPointArray([dotPoints]);
+            } else {
+                setPointArray(pre => [...pre, dotPoints]);
             }
+        }
+
+    }, [scene, dotPoints]);
+
+    useEffect(() => {
+
+        // dotPoints 배열의 각 점에 대해 mesh가 없으면 생성 후 scene에 추가
+        pointArray.forEach((point, index) => {
+            // 해당 이름의 mesh가 이미 존재하면 건너뛰기
+            if (scene.getObjectByName(`circle.${index}`)) return;
+            const geometry = new THREE.CircleGeometry(1, 32);
+            const material = new THREE.MeshBasicMaterial({
+                color: 0xffff00,
+                side: THREE.DoubleSide,
+            });
+            const circle = new THREE.Mesh(geometry, material);
+            const newPointTarget = point.position.clone().add(
+                new THREE.Vector3(
+                    point.normal.x,
+                    point.normal.y,
+                    point.normal.z
+                ).multiplyScalar(0.01)
+            );
+            // 점의 위치로 mesh 배치
+            circle.position.copy(newPointTarget);
+            circle.lookAt(point.position.clone().add(point.normal));
+            circle.scale.set(0.05, 0.05, 0.05);
+
+            // scene에 안전하게 mesh 추가
+            scene.add(circle);
+            circle.name = `circle.${index}`;
+        });
+        return () => {
+            deleteDot(scene)
         };
-    }, [firstClickVector, scene]);
+    }, [pointArray, scene]);
 
     return null;
 }
 
 export default PointMark
+
+

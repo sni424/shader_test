@@ -1,21 +1,23 @@
 import { useThree } from '@react-three/fiber';
-import { useSetAtom } from 'jotai';
+import { useAtom, useSetAtom } from 'jotai';
 import React, { useEffect, useRef } from 'react'
 import * as THREE from "three"
-import { firstVectorAtom, updateLineAtom } from '../utils.ts/atom';
+import { dotAtom, firstVectorAtom, lastVectorAtom } from '../utils/atom';
+import { deleteDot } from '../utils/collectFun';
 
 const CanvasClickEvent = ({ dimensionsClick }: { dimensionsClick: boolean }) => {
 
     const { camera, pointer, scene } = useThree();
     const firstMouse = useRef({ x: 0, y: 0 })
-    const startPositionVector = useRef<THREE.Vector3>(new THREE.Vector3())
-    const startNormalVector = useRef<THREE.Vector3>(new THREE.Vector3())
+
     const setFirstVector = useSetAtom(firstVectorAtom)
-    const setUpdateLine = useSetAtom(updateLineAtom)
-    const startPointRef = useRef<THREE.Vector3>(new THREE.Vector3())
+    const setUpdateLine = useSetAtom(lastVectorAtom)
+    const setPointDots = useSetAtom(dotAtom)
+
     const isDimensions = useRef(false)
     //마우스 드래그 체크
     const isDrag = useRef(false)
+    const isClick = useRef(0)
 
 
     const rayCasterFun = () => {
@@ -26,12 +28,15 @@ const CanvasClickEvent = ({ dimensionsClick }: { dimensionsClick: boolean }) => 
             console.error('scene이 없습니다');
             return null;
         }
+        const newChildren = scene.children.filter(child => {
+            return !child.name.includes("dimensionLine") && !child.name.includes("circle")
+        })
 
-        const intersects = raycaster.intersectObjects(scene.children, true);
+        const intersects = raycaster.intersectObjects(newChildren, true);
         if (!intersects.length) return null;
 
         const { point: targetPoint, normal: targetNormal } = intersects[0];
-        console.log("dimensionsClick", intersects[0])
+
         return {
             point: targetPoint,
             normal: targetNormal?.normalize()
@@ -39,53 +44,26 @@ const CanvasClickEvent = ({ dimensionsClick }: { dimensionsClick: boolean }) => 
     };
 
     const handleMouseDown = (e: MouseEvent) => {
-        console.log("dimensionsClick", isDimensions.current)
+
         if (isDimensions.current) {
-            const raycastResult = rayCasterFun();
-            if (raycastResult) {
+            firstMouse.current.x = e.clientX
+            firstMouse.current.y = e.clientY
 
-                if (raycastResult.normal) {
+            isDrag.current = true;
 
-                    setFirstVector({
-                        position: raycastResult.point,
-                        normal: raycastResult.normal
-                    })
-                    startPointRef.current = raycastResult.point
-                }
-                isDrag.current = true;
-            }
         }
     };
 
     const mouseMoveEvent = (e: MouseEvent) => {
-        if (isDimensions.current && !isDrag.current) {
-
-
-            // 현재 마우스 위치로 레이캐스팅
-            const raycaster = new THREE.Raycaster();
-            raycaster.setFromCamera(
-                new THREE.Vector2(
-                    (e.clientX / window.innerWidth) * 2 - 1,
-                    -(e.clientY / window.innerHeight) * 2 + 1
-                ),
-                camera
-            );
-
-            const intersects = raycaster.intersectObjects(scene.children, true);
-            if (intersects.length > 0 && startPointRef.current) {
-                const currentPoint = intersects[0].point;
-
-
-                const distance = startPointRef.current.distanceTo(currentPoint);
-
-
-                const lineDirection = currentPoint.clone().sub(startPointRef.current).normalize();
-                const endPoint = startPointRef.current.clone().add(
-                    lineDirection.multiplyScalar(distance)
-                );
-                // console.log("endPoint", endPoint)
-
-
+        if (isDimensions.current && isDrag.current && isClick.current < 3) {
+            const raycastResult = rayCasterFun();
+            if (raycastResult) {
+                if (raycastResult.normal) {
+                    setUpdateLine({
+                        position: raycastResult.point,
+                        normal: raycastResult.normal
+                    })
+                }
             }
         }
     }
@@ -93,13 +71,33 @@ const CanvasClickEvent = ({ dimensionsClick }: { dimensionsClick: boolean }) => 
 
 
     const mouseUpEvent = (e: MouseEvent) => {
+
         isDrag.current = false
         if (isDimensions.current && firstMouse.current.x ===
             e.clientX && firstMouse.current.y === e.clientY) {
-            setFirstVector({
-                position: startPositionVector.current,
-                normal: startNormalVector.current
-            })
+            if (isClick.current >= 4) {
+                isClick.current = 0
+            }
+            isClick.current += 1
+
+            const raycastResult = rayCasterFun();
+            if (raycastResult) {
+                if (raycastResult.normal) {
+                    if (isClick.current < 3) {
+                        setFirstVector({
+                            position: raycastResult.point.clone(),
+                            normal: raycastResult.normal.clone()
+                        })
+                    }
+
+                    setPointDots({
+                        position: raycastResult.point.clone(),
+                        normal: raycastResult.normal.clone()
+                    });
+
+                }
+                isDrag.current = true;
+            }
         }
     }
 

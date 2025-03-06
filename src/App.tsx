@@ -12,6 +12,8 @@ import PointMark from "./components/PointMark";
 
 import DimensionComplete from "./components/DimensionComplete";
 import PredrawnLine from "./components/PredrawnLine";
+import LineComponent from "./components/LineComponent";
+import CanvasKeyEvent from "./components/CanvasKeyEvent";
 
 const step = [1, 2, 3, 4, 5, 6, 7]
 
@@ -91,7 +93,7 @@ export default function App() {
           {dimensionsClick ? "측정취소" : "거리측정"}
         </button>
         : null}
-      {dimensionsClick &&
+      {pageStep === 1 && dimensionsClick &&
         <ul
           style={{
             position: "absolute",
@@ -161,7 +163,8 @@ export default function App() {
           {pageStep === 6 &&
             <>
               <PointMark />
-              {/* <LineComponent /> */}
+              <LineComponent />
+              <CanvasKeyEvent />
               <CanvasClickEvent dimensionsClick={dimensionsClick} />
             </>
           }

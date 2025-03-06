@@ -75,7 +75,7 @@ const PredrawnLine = ({ dimensionsClick, room }: { dimensionsClick: boolean, roo
                 const deltaX = Math.abs(child[3] - child[0]);
                 const deltaY = Math.abs(child[4] - child[1]);
                 const axis = deltaX > 0 ? "x" : deltaY > 0 ? "y" : "z";
-                console.log("length", length, axis)
+
                 return (
                     <React.Fragment key={`line_${index}`}>
                         <Sphere
@@ -109,8 +109,19 @@ const PredrawnLine = ({ dimensionsClick, room }: { dimensionsClick: boolean, roo
                         </Sphere>
                         <mesh position={axisPosition(axis, child) as [number, number, number]}>
                             <Html>
-                                <div style={{ width: "150px" }}>
-                                    <h1 style={{ fontSize: "16px" }}>{length.toFixed(2)} m</h1>
+                                <div
+                                    style={{
+                                        display: "inline-flex",
+                                        backgroundColor: "white",
+                                        padding: "4px 8px",
+                                        whiteSpace: "nowrap",
+                                        borderRadius: "4px",
+                                        boxShadow: "0 2px 5px rgba(0, 0, 0, 0.1)",
+                                    }}
+                                >
+                                    <h1 style={{ fontSize: "16px", color: "black", margin: 0, textAlign: "center" }}>
+                                        {length.toFixed(2)} m
+                                    </h1>
                                 </div>
                             </Html>
                         </mesh>
