@@ -14,8 +14,10 @@ import DimensionComplete from "./components/DimensionComplete";
 import PredrawnLine from "./components/PredrawnLine";
 import LineComponent from "./components/LineComponent";
 import CanvasKeyEvent from "./components/CanvasKeyEvent";
+import CheckRaycaster from "./components/CheckRaycaster";
+import Type2PredrawLine from "./components/Type2PredrawLine";
 
-const step = [1, 2, 3, 4, 5, 6, 7]
+const step = [1, 2, 3, 4, 5, 6, 7, 8]
 
 const roomButton = ["거실", "주방", "드레스룸"]
 export default function App() {
@@ -75,7 +77,7 @@ export default function App() {
       >
         전환하기
       </button>
-      {pageStep === 1 || pageStep === 6 ?
+      {pageStep === 7 || pageStep === 6 || pageStep === 8 ?
         <button
           style={{
             position: "absolute",
@@ -93,7 +95,7 @@ export default function App() {
           {dimensionsClick ? "측정취소" : "거리측정"}
         </button>
         : null}
-      {pageStep === 1 && dimensionsClick &&
+      {pageStep === 7 && dimensionsClick &&
         <ul
           style={{
             position: "absolute",
@@ -133,8 +135,8 @@ export default function App() {
         }}
       >
         <Canvas>
-          {pageStep === 1 && <DimensionComplete />}
-          {pageStep === 7 &&
+
+          {pageStep === 1 &&
             <ModelTextureTransition isClick={isClick} />
           }
           {pageStep === 2 &&
@@ -143,6 +145,7 @@ export default function App() {
           {pageStep === 3 &&
             <ModelOnBeforeShader isClick={isClick} />
           }
+          {pageStep !== 4 && <Environment preset="city" />}
           {pageStep === 4 &&
             <CheckLightMap isClick={isClick} />
           }
@@ -153,13 +156,7 @@ export default function App() {
             <CheckDimensions />
           }
 
-          {pageStep === 1 && <PredrawnLine dimensionsClick={dimensionsClick}
-            room={room}
-          />}
-
           <OrbitControls />
-
-          {pageStep !== 4 && <Environment preset="city" />}
           {pageStep === 6 &&
             <>
               <PointMark />
@@ -168,6 +165,25 @@ export default function App() {
               <CanvasClickEvent dimensionsClick={dimensionsClick} />
             </>
           }
+          {pageStep === 7 || pageStep === 8 ?
+            <>
+              <DimensionComplete pageStep={pageStep} />
+              <CheckRaycaster />
+            </> : null
+          }
+          {pageStep === 7 &&
+            <>
+              <PredrawnLine dimensionsClick={dimensionsClick}
+                room={room}
+              />
+
+            </>
+
+          }
+          {pageStep === 8 &&
+            <Type2PredrawLine dimensionsClick={dimensionsClick}
+              room={room}
+            />}
 
 
         </Canvas>

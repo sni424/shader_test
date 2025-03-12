@@ -2,6 +2,7 @@ import { useThree } from '@react-three/fiber';
 import React, { useEffect, useState } from 'react'
 import * as THREE from "three"
 import { GLTFLoader } from 'three/examples/jsm/Addons.js';
+import baseWithDpfrom from "/baseWithDp.glb?url"
 import onlyBase from "/onlyBase.glb?url"
 
 const cameraMatrix = [
@@ -22,7 +23,7 @@ const cameraMatrix = [
     0.2417023555759947,
     1
 ]
-const DimensionComplete = () => {
+const DimensionComplete = ({ pageStep }: { pageStep: number }) => {
     const { camera } = useThree()
     const [gltfScene, setGltfScene] = useState<THREE.Group | null>(null);
 
@@ -33,11 +34,11 @@ const DimensionComplete = () => {
             matrix.decompose(camera.position, camera.quaternion, camera.scale);
             camera.updateMatrixWorld(true);
         }
-        loader.load(onlyBase, (gltf) => {
+        loader.load(pageStep === 7 ? onlyBase : baseWithDpfrom, (gltf) => {
             setGltfScene(gltf.scene);
         });
 
-    }, [camera]);
+    }, [camera, pageStep]);
 
     return gltfScene ? <primitive object={gltfScene} /> : null;
 

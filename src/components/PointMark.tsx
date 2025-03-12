@@ -4,15 +4,25 @@ import { dotAtom } from '../utils/atom';
 import * as THREE from "three"
 import { useThree } from '@react-three/fiber';
 import { deleteDot } from '../utils/collectFun';
+import { VectorObject } from '../utils/type';
 
 const PointMark = () => {
     const { scene } = useThree()
-    const [dotPoints] = useAtom(dotAtom)
+    const [dotPoints, setDotPoints] = useAtom(dotAtom)
 
     const [pointArray, setPointArray] = useState<{
         position: THREE.Vector3;
         normal: THREE.Vector3;
     }[]>([])
+
+    function lookAtOppositeNormal(object: THREE.Mesh, point: VectorObject) {
+        // normal의 반대 방향 계산 및 정규화
+        const oppositeNormal = point.normal.clone().negate().normalize();
+        // ConeGeometry는 기본적으로 Y축(0,1,0)을 향하므로, 이 축에서 반대 normal로 회전
+        object.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), oppositeNormal);
+
+    }
+
 
     useEffect(() => {
         if (dotPoints) {
@@ -32,32 +42,31 @@ const PointMark = () => {
         pointArray.forEach((point, index) => {
             // 해당 이름의 mesh가 이미 존재하면 건너뛰기
             if (scene.getObjectByName(`circle.${index}`)) return;
-            const geometry = new THREE.CircleGeometry(1, 32);
+            const geometry = new THREE.ConeGeometry(3, 10, 32);
             const material = new THREE.MeshBasicMaterial({
-                color: 0xffff00,
+                color: 0x00ffff,
                 side: THREE.DoubleSide,
             });
             const circle = new THREE.Mesh(geometry, material);
             const newPointTarget = point.position.clone().add(
-                new THREE.Vector3(
-                    point.normal.x,
-                    point.normal.y,
-                    point.normal.z
-                ).multiplyScalar(0.01)
+                new THREE.Vector3(point.normal.x, point.normal.y, point.normal.z).multiplyScalar(0.02)
             );
-            // 점의 위치로 mesh 배치
-            circle.position.copy(newPointTarget);
-            circle.lookAt(point.position.clone().add(point.normal));
-            circle.scale.set(0.05, 0.05, 0.05);
 
-            // scene에 안전하게 mesh 추가
+            circle.position.copy(newPointTarget);
+            lookAtOppositeNormal(circle, point);
+            circle.scale.set(0.004, 0.004, 0.004);
             scene.add(circle);
             circle.name = `circle.${index}`;
         });
+
+    }, [pointArray, scene]);
+
+    useEffect(() => {
         return () => {
             deleteDot(scene)
-        };
-    }, [pointArray, scene]);
+            setDotPoints(null)
+        }
+    }, [])
 
     return null;
 }
