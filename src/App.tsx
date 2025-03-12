@@ -165,12 +165,12 @@ export default function App() {
               <CanvasClickEvent dimensionsClick={dimensionsClick} />
             </>
           }
-          {pageStep === 7 || pageStep === 8 ?
+          {/* {pageStep === 7 || pageStep === 8 ?
             <>
               <DimensionComplete pageStep={pageStep} />
               <CheckRaycaster />
             </> : null
-          }
+          } */}
           {pageStep === 7 &&
             <>
               <PredrawnLine dimensionsClick={dimensionsClick}
