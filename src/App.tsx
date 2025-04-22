@@ -10,14 +10,15 @@ import CheckDimensions from "./components/CheckDimensions";
 import CanvasClickEvent from "./components/CanvasClickEvent";
 import PointMark from "./components/PointMark";
 
-import DimensionComplete from "./components/DimensionComplete";
 import PredrawnLine from "./components/PredrawnLine";
 import LineComponent from "./components/LineComponent";
 import CanvasKeyEvent from "./components/CanvasKeyEvent";
-import CheckRaycaster from "./components/CheckRaycaster";
 import Type2PredrawLine from "./components/Type2PredrawLine";
+import OcclusionTest from "./components/OcclusionTest";
+import CheckCrossLine from "./components/CheckCrossLine";
+import PolygonPoint from "./components/PolygonPoint";
 
-const step = [1, 2, 3, 4, 5, 6, 7, 8]
+const step = Array.from({ length: 11 }, (_, i) => i + 1);
 
 const roomButton = ["거실", "주방", "드레스룸"]
 export default function App() {
@@ -184,7 +185,9 @@ export default function App() {
             <Type2PredrawLine dimensionsClick={dimensionsClick}
               room={room}
             />}
-
+          {pageStep === 9 && <OcclusionTest />}
+          {pageStep === 10 && <CheckCrossLine />}
+          {pageStep === 11 && <PolygonPoint />}
 
         </Canvas>
       </div>

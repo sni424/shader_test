@@ -56,3 +56,36 @@ export const deleteLine = (scene: THREE.Scene) => {
     }
   });
 };
+
+export const isIntersectFromPoints = (
+  line1: [number, number][],
+  line2: [number, number][]
+): boolean => {
+  const [a, b] = line1;
+  const [c, d] = line2;
+
+  function ccw(
+    p1: [number, number],
+    p2: [number, number],
+    p3: [number, number]
+  ) {
+    const result =
+      (p2[0] - p1[0]) * (p3[1] - p1[1]) - (p2[1] - p1[1]) * (p3[0] - p1[0]);
+    if (result > 0) return 1;
+    if (result < 0) return -1;
+    return 0;
+  }
+
+  const ab = ccw(a, b, c) * ccw(a, b, d);
+  const cd = ccw(c, d, a) * ccw(c, d, b);
+
+  if (ab === 0 && cd === 0) {
+    const [a1x, a2x] = [Math.min(a[0], b[0]), Math.max(a[0], b[0])];
+    const [a1y, a2y] = [Math.min(a[1], b[1]), Math.max(a[1], b[1])];
+    const [b1x, b2x] = [Math.min(c[0], d[0]), Math.max(c[0], d[0])];
+    const [b1y, b2y] = [Math.min(c[1], d[1]), Math.max(c[1], d[1])];
+    return a1x <= b2x && b1x <= a2x && a1y <= b2y && b1y <= a2y;
+  }
+
+  return ab <= 0 && cd <= 0;
+};
