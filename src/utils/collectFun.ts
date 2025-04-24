@@ -89,3 +89,20 @@ export const isIntersectFromPoints = (
 
   return ab <= 0 && cd <= 0;
 };
+
+export const isPointOnLine = (
+  point: number[],
+  line1: [number, number],
+  line2: [number, number]
+) => {
+  const a = line2[1] - line1[1];
+  const b = line1[0] - line2[0];
+  const c = line2[0] * line1[1] - line1[0] * line2[1];
+  return (
+    a * point[0] + b * point[1] + c === 0 &&
+    point[0] >= Math.min(line1[0], line2[0]) &&
+    point[0] <= Math.max(line1[0], line2[0]) &&
+    point[1] >= Math.min(line1[1], line2[1]) &&
+    point[1] <= Math.max(line1[1], line2[1])
+  );
+};

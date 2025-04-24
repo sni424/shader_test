@@ -1,6 +1,6 @@
 import { Line } from '@react-three/drei';
 import * as THREE from "three"
-import { isIntersectFromPoints } from '../utils/collectFun';
+import { isIntersectFromPoints, isPointOnLine } from '../utils/collectFun';
 type Point2D = [number, number];
 type Point3D = [number, number, number];
 
@@ -28,6 +28,16 @@ const alphaRoom: Point2D[] = [
     [1.5658398436651169, 1.039513247954269],
     [1.5086272633106006, 4.657032551449353],
     [3.276646203063997, 4.6658227944589825]
+]
+
+const bedRoom1: Point2D[] = [
+
+    [6.6393446294581056, 0.979095050403372],
+    [6.567667876402825, 4.670969795489089],
+    [9.371569343004019, 4.595773901067477],
+    [9.39850672379448, 1.2412015806742098],
+    [7.348498594905954, 1.340498517008008],
+    [7.3418424219951675, 0.983810327425368]
 ]
 
 const wallPoint: Point2D[] = [
@@ -122,6 +132,22 @@ const walls: Point3D[] = [
     [42, 0, 0]
 ]
 
+const bed2Mesh = {
+    minX: 6.112507203012343, maxX: 6.362489363760102, minY: 1.1725017856508466, maxY: 4.732323544129732
+}
+
+const bed2FrameMesh = {
+    minX: 6.338491431225919, maxX:
+        6.36250860487763, minY:
+        1.4482526176576578, maxY: 4.003315868565173
+}
+
+const bed1Mesh = {
+    minX: 6.496831374004267, maxX:
+        6.5665712224913255, minY: 3.392840551324235, maxY:
+        3.4625804674082667
+}
+
 const PolygonPoint = () => {
     const gridSize = 0.1;
 
@@ -178,7 +204,7 @@ const PolygonPoint = () => {
     };
     const boxPoint = () => {
         const points: Point2D[] = [];
-        const newBoxData = { minX: 6.112507203012343, maxX: 6.362489363760102, minY: 1.1725017856508466, maxY: 4.732323544129732 }
+        const newBoxData = bed1Mesh
 
         for (let x = newBoxData.minX; x <= newBoxData.maxX; x += gridSize) {
             for (let y = newBoxData.minY; y <= newBoxData.maxY; y += gridSize) {
@@ -190,22 +216,60 @@ const PolygonPoint = () => {
         return points;
     }
 
+    // const checkBoxToObject = (roomArray: Point2D[], objectArray: Point2D[]): boolean => {
+    //     const resultArray = []
+    //     for (const roomPoint of roomArray) {
+    //         for (const boxPoint of objectArray) {
+    //             for (const wallPointIndex of walls) {
+    //                 const result = isIntersectFromPoints(
+    //                     [roomPoint, boxPoint],
+    //                     [wallPoint[wallPointIndex[0]], wallPoint[wallPointIndex[1]]]
+    //                 );
+    //                 if (result) {
+    //                     continue
+    //                 } else {
+    //                     resultArray.push(result)
+    //                 }
+    //             }
+    //         }
+    //     }
+    //     if (resultArray.every(child => child === false)) {
+    //         return true
+    //     } else {
+    //         return false;
+    //     }
+    // };
+
     const checkBoxToObject = (roomArray: Point2D[], objectArray: Point2D[]): boolean => {
         for (const roomPoint of roomArray) {
             for (const boxPoint of objectArray) {
+                // 이 경로가 어떤 벽과 교차하는지 추적
+                let intersectsAnyWall = false;
                 for (const wallPointIndex of walls) {
                     const result = isIntersectFromPoints(
                         [roomPoint, boxPoint],
                         [wallPoint[wallPointIndex[0]], wallPoint[wallPointIndex[1]]]
                     );
-                    if (!result) {
-                        console.log("checkBoxToObject", [roomPoint, boxPoint],
-                            [wallPoint[wallPointIndex[0]], wallPoint[wallPointIndex[1]]])
-                        return true;
+                    if (result) {
+
+                        // 하나라도 교차하면 이 쌍은 유효하지 않음
+                        // if (isPointOnLine(boxPoint, wallPoint[wallPointIndex[0]], wallPoint[wallPointIndex[1]])) {
+                        //     intersectsAnyWall = false;
+                        //     break;
+                        // } else {
+                        intersectsAnyWall = true;
+                        break;
+                        // }
+
                     }
+                }
+                if (!intersectsAnyWall) {
+                    // 모든 벽과 교차하지 않는 경로 발견
+                    return true;
                 }
             }
         }
+        // 유효한 경로가 없음
         return false;
     };
 
@@ -215,6 +279,7 @@ const PolygonPoint = () => {
     const generatedPoints = generateGridPointsInsidePolygon(roomPoint, gridSize);
     const masterRoomPoints = generateGridPointsInsidePolygon(masterRoom, gridSize);
     const alphaRoomPoint = generateGridPointsInsidePolygon(alphaRoom, gridSize);
+    const bedRoom1Point = generateGridPointsInsidePolygon(bedRoom1, gridSize);
     const Polygon = ({ points }: { points: Point2D[] }) => {
         const linePoints = points
             .map((p) => new THREE.Vector3(p[0], p[1], 0))
@@ -238,21 +303,25 @@ const PolygonPoint = () => {
         );
     };
 
-    console.log("newBoxPoints", newBoxPoints, alphaRoomPoint)
 
 
-    if (generatedPoints && newBoxPoints) {
-        const occlusionResult = checkBoxToObject(generatedPoints, newBoxPoints)
-        console.log("generatedPoints", occlusionResult)
-    }
+    // if (generatedPoints && newBoxPoints) {
+    //     const occlusionResult = checkBoxToObject(generatedPoints, newBoxPoints)
+    //     console.log("generatedPoints", occlusionResult)
+    // }
 
-    if (masterRoomPoints && newBoxPoints) {
-        const occlusionResult1 = checkBoxToObject(masterRoomPoints, newBoxPoints)
-        console.log("masterRoomPoints", occlusionResult1)
-    }
-    if (alphaRoomPoint && newBoxPoints) {
-        const occlusionResult2 = checkBoxToObject(alphaRoomPoint, newBoxPoints)
-        console.log("alphaRoomPoint", occlusionResult2)
+    // if (masterRoomPoints && newBoxPoints) {
+    //     const occlusionResult = checkBoxToObject(masterRoomPoints, newBoxPoints)
+    //     console.log("masterRoomPoints", occlusionResult)
+    // }
+    // if (alphaRoomPoint && newBoxPoints) {
+    //     const occlusionResult = checkBoxToObject(alphaRoomPoint, newBoxPoints)
+    //     console.log("alphaRoomPoint", occlusionResult)
+    // }
+
+    if (bedRoom1Point && newBoxPoints) {
+        const occlusionResult = checkBoxToObject(bedRoom1Point, newBoxPoints)
+        console.log("bedRoom1Point", occlusionResult)
     }
 
 
@@ -265,9 +334,11 @@ const PolygonPoint = () => {
             <Polygon points={roomPoint} />
             <Polygon points={masterRoom} />
             <Polygon points={alphaRoom} />
+            <Polygon points={bedRoom1} />
             <Points points={generatedPoints} />
             <Points points={masterRoomPoints} />
             <Points points={newBoxPoints} />
+            <Points points={bedRoom1Point} />
             {walls.map((line, index) => (
 
                 <Line
