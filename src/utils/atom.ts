@@ -17,3 +17,5 @@ export const dotAtom = atom<{
 } | null>(null);
 
 export const eventAtom = atom<boolean>(false);
+
+export const modelAtom = atom<THREE.Object3D | null>(null);

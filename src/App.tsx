@@ -187,8 +187,13 @@ export default function App() {
             />}
           {pageStep === 9 && <OcclusionTest />}
           {pageStep === 10 && <CheckCrossLine />}
-          {pageStep === 11 && <PolygonPoint />}
-
+          {pageStep === 11 &&
+            <>
+              <PolygonPoint />
+              <CheckDimensions />
+            </>
+          }
+          <Environment preset="city" />
         </Canvas>
       </div>
     </div>
