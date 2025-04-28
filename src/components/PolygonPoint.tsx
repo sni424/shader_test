@@ -1,6 +1,6 @@
 import { Line } from '@react-three/drei';
 import * as THREE from "three"
-import { isIntersectFromPoints, isPointOnLine } from '../utils/collectFun';
+import { isIntersectFromPoints, isPointOnLine, newRoomColorString } from '../utils/collectFun';
 import { useThree } from '@react-three/fiber';
 import { useEffect, useState } from 'react';
 import { useAtomValue } from 'jotai';
@@ -223,23 +223,40 @@ const PolygonPoint = () => {
     const glbModel = useAtomValue(modelAtom)
     const [navPoint, setNavPoint] = useState<[number, number][]>([])
     const { scene } = useThree()
-    const [objectMesh, setObjectMesh] = useState<THREE.Mesh>()
+    const [objectBoxPoint, setObjectBoxPoint] = useState<[number, number][][]>([])
     const [meshPolygon, setMeshPolygon] = useState<[number, number][]>([])
+    // 포인트가 폴리곤 내부에 있는지 확인하는 함수
     const isPointInPolygon = (point: Point2D, polygon: Point2D[]): boolean => {
-        const x = point[0],
-            y = point[1];
+        // 포인트의 x, y 좌표를 추출
+        const x = point[0], y = point[1];
+
+        // 포인트가 폴리곤 내부에 있는지 여부를 추적 (초기값은 false)
         let inside = false;
+
+        // 폴리곤의 모든 변을 순회
+        // i는 현재 정점, j는 이전 정점 (마지막 정점과 첫 번째 정점을 연결하기 위해 j 사용)
         for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
-            const xi = polygon[i][0],
-                yi = polygon[i][1];
-            const xj = polygon[j][0],
-                yj = polygon[j][1];
+            // 현재 정점(i)의 x, z 좌표
+            const xi = polygon[i][0], yi = polygon[i][1];
+            // 이전 정점(j)의 x, z 좌표
+            const xj = polygon[j][0], yj = polygon[j][1];
+
+            // Ray Casting 알고리즘의 교차 조건 확인
+            // 1. yi와 yj가 y를 기준으로 서로 다른 방향에 있는지 확인 (yi > y !== yj > y)
+            // 2. 포인트의 x 좌표가 변의 x 범위 내에 있는지 확인
             const intersect =
-                yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi;
+                yi > y !== yj > y && // y 좌표가 변의 y 범위 사이에 있는지
+                x < ((xj - xi) * (y - yi)) / (yj - yi) + xi; // x 좌표가 변의 방정식 왼쪽에 있는지
+
+            // 교차가 발생하면 inside 값을 토글 (true ↔ false)
             if (intersect) inside = !inside;
         }
+
+        // 최종적으로 inside 값 반환 (true면 내부, false면 외부)
         return inside;
     };
+
+
     function getOrderedPolygonFromGeometry(geometry: THREE.BufferGeometry): Point2D[] {
         const edges = new THREE.EdgesGeometry(geometry);
         const pos = edges.attributes.position as THREE.BufferAttribute;
@@ -283,17 +300,138 @@ const PolygonPoint = () => {
         return polygon;
     }
 
-    useEffect(() => {
-        if (scene && glbModel) {
-            // const boundingBox = new THREE.Box3().setFromObject(glbModel);
-            const mesh = glbModel.children[0] as THREE.Mesh
-            const geometry = mesh.geometry as THREE.BufferGeometry;
-            const polygon: Point2D[] = getOrderedPolygonFromGeometry(geometry);
-            console.log("edgesGeom", polygon)
-            setMeshPolygon(polygon)
-            const newPoint = meshInsidePoint(polygon, geometry.boundingBox?.min, geometry.boundingBox?.max)
 
+
+    // function getContourPoints2D(mesh: THREE.Mesh): [number, number][] {
+    //     const geometry = mesh.geometry as THREE.BufferGeometry;
+    //     const edges = new THREE.EdgesGeometry(geometry);
+    //     const posAttr = edges.attributes.position;
+
+    //     // 2D 점 배열 생성 (XZ 평면 기준)
+    //     const points: [number, number][] = [];
+
+    //     for (let i = 0; i < posAttr.count; i++) {
+    //         points.push([
+    //             posAttr.getX(i),  // X 좌표
+    //             posAttr.getZ(i)   // Z 좌표 (Y 대신 Z 사용)
+    //         ]);
+    //     }
+
+    //     // 중복 제거
+    //     const uniquePoints: [number, number][] = [];
+    //     const threshold = 0.0001;
+    //     const seen = new Set<string>();
+
+    //     for (const point of points) {
+    //         // 소수점 아래 5자리까지 반올림하여 키 생성
+    //         const key = `${point[0].toFixed(5)},${point[1].toFixed(5)}`;
+
+    //         if (!seen.has(key)) {
+    //             seen.add(key);
+    //             uniquePoints.push(point);
+    //         }
+    //     }
+
+    //     return uniquePoints;
+    // }
+
+    function getContourSegments2D(mesh: THREE.Mesh): [number, number][][] {
+        const geometry = mesh.geometry as THREE.BufferGeometry;
+        const edges = new THREE.EdgesGeometry(geometry);
+        const posAttr = edges.attributes.position;
+
+        // 선분 배열 생성 (XZ 평면 기준)
+        const segments: [number, number][][] = [];
+
+        // 2개씩 짝을 이루어 선분 생성
+        for (let i = 0; i < posAttr.count; i += 2) {
+            const start: [number, number] = [posAttr.getX(i), posAttr.getZ(i)];
+            const end: [number, number] = [posAttr.getX(i + 1), posAttr.getZ(i + 1)];
+            segments.push([start, end]);
+        }
+
+        return segments;
+    }
+
+    function getContourPolygon2D(mesh: THREE.Mesh): [number, number][] {
+        const segments = getContourSegments2D(mesh);
+        if (segments.length === 0) return [];
+
+        // 연결된 정점 순서로 정렬
+        const polygon: [number, number][] = [];
+        const visited = new Set<number>();
+
+        // 첫 번째 선분의 시작점과 끝점 추가
+        polygon.push(segments[0][0]);
+        polygon.push(segments[0][1]);
+        visited.add(0);
+
+        let currentPoint = segments[0][1];
+        const distance = 0.0001
+        // 남은 선분들 연결
+        while (visited.size < segments.length) {
+            let found = false;
+
+            for (let i = 0; i < segments.length; i++) {
+                if (visited.has(i)) continue;
+
+                const [start, end] = segments[i];
+
+                // 시작점과 현재 점이 같은 경우
+                if (Math.abs(start[0] - currentPoint[0]) < distance &&
+                    Math.abs(start[1] - currentPoint[1]) < distance) {
+                    polygon.push(end);
+                    currentPoint = end;
+                    visited.add(i);
+                    found = true;
+                    break;
+                }
+
+                // 끝점과 현재 점이 같은 경우
+                if (Math.abs(end[0] - currentPoint[0]) < distance &&
+                    Math.abs(end[1] - currentPoint[1]) < distance) {
+                    polygon.push(start);
+                    currentPoint = start;
+                    visited.add(i);
+                    found = true;
+                    break;
+                }
+            }
+
+            // 연결된 선분을 찾지 못했다면 루프 종료
+            if (!found) break;
+        }
+
+        return polygon;
+    }
+
+
+
+    useEffect(() => {
+        if (scene && glbModel.length > 1) {
+            // const boundingBox = new THREE.Box3().setFromObject(glbModel);
+            const mesh = glbModel[0].children[0] as THREE.Mesh
+            const geometry = mesh.geometry as THREE.BufferGeometry;
+            // const material = new THREE.LineBasicMaterial({ color: 0xffffff });
+
+            // const wireframe = new THREE.LineSegments(edges, material);
+            // scene.add(wireframe)
+            // setMeshPolygon(newSegments)
+
+
+
+            if (!geometry.boundingBox) {
+                return console.warn("no geometry")
+            }
+            // console.log("edgesGeom", polygon)
+
+
+
+            // const polygon: Point2D[] = getOrderedPolygonFromGeometry(geometry);
+            const polygon: Point2D[] = getContourPolygon2D(mesh);
+            const newPoint = meshInsidePoint(polygon, geometry.boundingBox?.min, geometry.boundingBox?.max)
             setNavPoint(newPoint)
+            setMeshPolygon(polygon)
             // 라인 머티리얼 생성
             // const lineMat = new THREE.LineBasicMaterial({ color: 0xff0000 });
 
@@ -303,12 +441,19 @@ const PolygonPoint = () => {
             // 씬에 추가
             // scene.add(outline);
 
-            // const newPoint = generateGridPointsInsidePolygon(glbModel.children[0].geometry.attributes.position.array)
-            // const { min, max } = boundingBox
-            // const navPoint = boxPoint(min, max)
-            // if (newPoint) {
-            //     setNavPoint(newPoint)
-            // }
+            glbModel[1].children[0].children.forEach(child => {
+
+                const boundingBox = new THREE.Box3().setFromObject(child);
+
+                const { min, max } = boundingBox
+
+
+                const objectBoxPoint = boxPoint(min, max)
+                if (objectBoxPoint) {
+                    setObjectBoxPoint(pre => [...pre, objectBoxPoint])
+                }
+            })
+
         }
     }, [glbModel, scene])
 
@@ -384,6 +529,7 @@ const PolygonPoint = () => {
         return points;
     }
 
+
     // const checkBoxToObject = (roomArray: Point2D[], objectArray: Point2D[]): boolean => {
     //     const resultArray = []
     //     for (const roomPoint of roomArray) {
@@ -420,7 +566,7 @@ const PolygonPoint = () => {
                     );
                     if (result) {
                         const lineInPoint = isPointOnLine(boxPoint, wallPoint[wallPointIndex[0]], wallPoint[wallPointIndex[1]])
-                        console.log("lineInPoint", lineInPoint)
+
                         // 하나라도 교차하면 이 쌍은 유효하지 않음
                         // if (isPointOnLine(boxPoint, wallPoint[wallPointIndex[0]], wallPoint[wallPointIndex[1]])) {
                         //     intersectsAnyWall = false;
@@ -442,7 +588,7 @@ const PolygonPoint = () => {
         return false;
     };
 
-    // const newBoxPoints = boxPoint()
+
 
 
     // const generatedPoints = generateGridPointsInsidePolygon(roomPoint);
@@ -456,7 +602,7 @@ const PolygonPoint = () => {
         return <Line points={linePoints} rotation={[Math.PI / 2, 0, 0]} color="blue" lineWidth={2} />;
     };
 
-    const Points = ({ points }: { points: Point2D[] }) => {
+    const Points = ({ points, color = "red" }: { points: Point2D[], color: string }) => {
         const geometry = new THREE.BufferGeometry();
         geometry.setAttribute(
             'position',
@@ -467,7 +613,7 @@ const PolygonPoint = () => {
         );
         return (
             <points geometry={geometry} rotation={[Math.PI / 2, 0, 0]}>
-                <pointsMaterial color="red" size={0.05} />
+                <pointsMaterial color={color} size={0.05} />
             </points>
         );
     };
@@ -488,10 +634,13 @@ const PolygonPoint = () => {
     //     console.log("alphaRoomPoint", occlusionResult)
     // }
 
-    // if (bedRoom1Point && newBoxPoints) {
-    //     const occlusionResult = checkBoxToObject(bedRoom1Point, newBoxPoints)
-    //     console.log("bedRoom1Point", occlusionResult)
-    // }
+    if (meshPolygon && objectBoxPoint.length > 0) {
+        objectBoxPoint.forEach(child => {
+            const occlusionResult = checkBoxToObject(meshPolygon, child)
+            console.log("bedRoom1Point", occlusionResult)
+        })
+
+    }
 
 
 
@@ -509,9 +658,15 @@ const PolygonPoint = () => {
             {/* {newBoxPoints && <Points points={newBoxPoints} />} */}
 
             {/* <Points points={bedRoom1Point} /> */}
-            {navPoint.length > 0 && <Points points={navPoint} />}
+            {objectBoxPoint.length > 0 &&
+                objectBoxPoint.map((child, index) => {
+                    return <Points key={`pointMesh_${index}`} points={child} color={newRoomColorString(index)} />
+                })
+
+            }
+            {navPoint.length > 0 && <Points points={navPoint} color='red' />}
             {meshPolygon.length > 0 && <Polygon points={meshPolygon} />}
-            {/* {walls.map((line, index) => (
+            {walls.map((line, index) => (
 
                 <Line
                     key={index}
@@ -523,7 +678,7 @@ const PolygonPoint = () => {
                     lineWidth={2}
                     segments
                 />
-            ))} */}
+            ))}
         </>
     );
 };

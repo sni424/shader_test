@@ -18,4 +18,4 @@ export const dotAtom = atom<{
 
 export const eventAtom = atom<boolean>(false);
 
-export const modelAtom = atom<THREE.Object3D | null>(null);
+export const modelAtom = atom<THREE.Object3D[]>([]);
