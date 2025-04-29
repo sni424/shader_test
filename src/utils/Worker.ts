@@ -58,7 +58,7 @@ export type WorkerTaskProcessNavPoints = {
   id: number;
   action: "processNav";
   data: {
-    navPoint: [number, number];
+    navPointArray: [number, number][];
     dpInfoArray: DpInfoType[];
     wallData: Walls;
   };
@@ -66,7 +66,7 @@ export type WorkerTaskProcessNavPoints = {
 export type WorkerResponseNav = {
   id: number;
   action: "processNav";
-  data: { navPoint: [number, number]; dpName: string[] };
+  data: { navPoint: [number, number]; dpName: string[] }[];
 };
 
 //선분 교차 검증 함수
@@ -195,22 +195,22 @@ self.onmessage = async (e: MessageEvent<WorkerTask>) => {
       (self as any).postMessage({ id, error: (err as any).message });
     }
   } else if (action === "processNav") {
-    const { navPoint, dpInfoArray, wallData } = data;
-    const dpName: string[] = [];
-
-    dpInfoArray.forEach((dp) => {
-      if (checkBoxToObject(navPoint, dp.point, wallData)) {
-        dpName.push(dp.name);
-      }
+    const { navPointArray, dpInfoArray, wallData } = data;
+    const navMeshArray: any = [];
+    navPointArray.forEach((point) => {
+      const dpName: string[] = [];
+      dpInfoArray.forEach((dp: DpInfoType) => {
+        if (checkBoxToObject(point, dp.point, wallData)) {
+          dpName.push(dp.name);
+        }
+      });
+      navMeshArray.push({ navPoint: point, dpName });
     });
 
     (self as any).postMessage({
       id,
       action: "processNav",
-      data: {
-        navPoint,
-        dpName,
-      },
+      data: navMeshArray,
     } as WorkerResponseNav);
   } else if (action === "exr") {
     let { url, arrayBuffer } = data;
