@@ -1,13 +1,14 @@
 // WorkerPool.ts
 
-import { THREE } from 'VTHREE';
+import { DpInfoType, Point2D, Walls } from "src/types";
+import { THREE } from "VTHREE";
 import {
   WorkerTaskBitmapToArrayBuffer,
   WorkerTaskCompress,
   WorkerTaskDecompress,
   WorkerTaskExr,
   WorkerTaskFetch,
-} from './Worker';
+} from "./Worker";
 
 type TaskExr = WorkerTaskExr & {
   resolve: (params: {
@@ -41,15 +42,28 @@ type TaskDecompress = WorkerTaskDecompress & {
   reject: (err: any) => void;
 };
 
+type TaskNavPoint = {
+  id: number;
+  action: "processNav";
+  data: {
+    navPoint: Point2D;
+    dpInfoArray: DpInfoType[];
+    wallData: Walls;
+  };
+  resolve: (value: { navPoint: [number, number]; dpName: string[] }) => void;
+  reject: (err: any) => void;
+};
+
 type Task =
   | TaskFetch
   | TaskExr
   | TaskBitmapToArrayBuffer
   | TaskCompress
-  | TaskDecompress;
+  | TaskDecompress
+  | TaskNavPoint;
 
 type TaskReturn<T extends { resolve: (...args: any[]) => void }> = Parameters<
-  T['resolve']
+  T["resolve"]
 >[0];
 
 type TaskFetch = WorkerTaskFetch & {
@@ -83,8 +97,8 @@ export default class Workers {
 
   private constructor(concurrency = navigator.hardwareConcurrency ?? 4) {
     for (let i = 0; i < concurrency; i++) {
-      const worker = new Worker(new URL('./Worker.ts', import.meta.url), {
-        type: 'module',
+      const worker = new Worker(new URL("./Worker.ts", import.meta.url), {
+        type: "module",
       });
       worker.onmessage = this.onMessage.bind(this);
       this.workers.push(worker);
@@ -98,15 +112,27 @@ export default class Workers {
 
   public static async fetch(
     url: string,
-    inflate: boolean = false,
+    inflate: boolean = false
   ): Promise<ArrayBuffer> {
     return this.instance._fetch(url, inflate);
+  }
+
+  public static async processNavPoints(
+    navPoints: Point2D[],
+    dpInfoArray: DpInfoType[],
+    wallData: Walls
+  ): Promise<{ navPoint: [number, number]; dpName: string[] }[]> {
+    const promises = navPoints.map((point) =>
+      this.instance._processNavPoint(point, dpInfoArray, wallData)
+    );
+    const results = await Promise.all(promises);
+    return results;
   }
 
   // trasnfer이면 worker로 넘겨버려서 앞으로 buffer을 사용할 수 없음
   public static async compress(
     buffer: ArrayBuffer,
-    transfer?: boolean,
+    transfer?: boolean
   ): Promise<ArrayBuffer> {
     return this.instance._compress(buffer, transfer);
   }
@@ -114,7 +140,7 @@ export default class Workers {
   // trasnfer이면 worker로 넘겨버려서 앞으로 buffer을 사용할 수 없음
   public static async decompress(
     buffer: ArrayBuffer,
-    transfer?: boolean,
+    transfer?: boolean
   ): Promise<ArrayBuffer> {
     return this.instance._decompress(buffer, transfer);
   }
@@ -122,19 +148,42 @@ export default class Workers {
   public static async exrParse(url?: string): Promise<ExrParse>;
   public static async exrParse(arrayBuffer?: ArrayBuffer): Promise<ExrParse>;
   public static async exrParse(
-    urlOrArrayBuffer?: string | ArrayBuffer,
+    urlOrArrayBuffer?: string | ArrayBuffer
   ): Promise<ExrParse> {
-    if (typeof urlOrArrayBuffer === 'string') {
+    if (typeof urlOrArrayBuffer === "string") {
       return this.instance._exrParse(urlOrArrayBuffer);
     } else if (urlOrArrayBuffer instanceof ArrayBuffer) {
       return this.instance._exrParse(urlOrArrayBuffer);
     } else {
-      throw new Error('Invalid argument');
+      throw new Error("Invalid argument");
     }
   }
 
   public static async bitmapToArrayBuffer(bitmap: ImageBitmap) {
     return this.instance._bitmapToArrayBuffer(bitmap);
+  }
+  private async _processNavPoint(
+    navPoint: Point2D,
+    dpInfoArray: DpInfoType[],
+    wallData: Walls
+  ): Promise<{ navPoint: [number, number]; dpName: string[] }> {
+    const id = this.taskId++;
+    const prom = new Promise<{ navPoint: [number, number]; dpName: string[] }>(
+      (resolve, reject) => {
+        const task: TaskNavPoint = {
+          id,
+          action: "processNav",
+          data: { navPoint, dpInfoArray, wallData },
+          resolve,
+          reject,
+        };
+        this.taskMap.set(id, task);
+        this.enqueue(task);
+      }
+    );
+    return prom.then((res) => {
+      return res;
+    });
   }
 
   private async _bitmapToArrayBuffer(bitmap: ImageBitmap): Promise<{
@@ -147,7 +196,7 @@ export default class Workers {
     return new Promise((resolve, reject) => {
       const task: Task = {
         id,
-        action: 'bitmapToArrayBuffer',
+        action: "bitmapToArrayBuffer",
         data: {
           bitmap,
         },
@@ -161,15 +210,15 @@ export default class Workers {
   }
 
   private async _exrParse(
-    urlOrArrayBuffer: string | ArrayBuffer,
+    urlOrArrayBuffer: string | ArrayBuffer
   ): Promise<ExrParse> {
     const id = this.taskId++;
 
-    const isUrlInput = typeof urlOrArrayBuffer === 'string';
+    const isUrlInput = typeof urlOrArrayBuffer === "string";
     return new Promise((resolve, reject) => {
       const task: Task = {
         id,
-        action: 'exr',
+        action: "exr",
         data: {
           url: isUrlInput ? urlOrArrayBuffer : undefined,
           arrayBuffer: isUrlInput ? undefined : urlOrArrayBuffer,
@@ -190,7 +239,7 @@ export default class Workers {
     const prom = new Promise((resolve, reject) => {
       const task: Task = {
         id,
-        action: 'fetch',
+        action: "fetch",
         data: { url, inflate },
         resolve,
         reject,
@@ -208,14 +257,14 @@ export default class Workers {
 
   private async _compress(
     buffer: ArrayBuffer,
-    transfer?: boolean,
+    transfer?: boolean
   ): Promise<ArrayBuffer> {
     const id = this.taskId++;
 
     return new Promise((resolve, reject) => {
       const task: Task = {
         id,
-        action: 'compress',
+        action: "compress",
         data: {
           arrayBuffer: buffer,
           transfer,
@@ -231,14 +280,14 @@ export default class Workers {
 
   private async _decompress(
     buffer: ArrayBuffer,
-    transfer?: boolean,
+    transfer?: boolean
   ): Promise<ArrayBuffer> {
     const id = this.taskId++;
 
     return new Promise((resolve, reject) => {
       const task: Task = {
         id,
-        action: 'decompress',
+        action: "decompress",
         data: {
           arrayBuffer: buffer,
           transfer,
@@ -270,15 +319,15 @@ export default class Workers {
 
     const transferrables = [];
 
-    if (task.action === 'exr' && task.data.arrayBuffer) {
+    if (task.action === "exr" && task.data.arrayBuffer) {
       transferrables.push(task.data.arrayBuffer);
     }
 
-    if (task.action === 'compress' && task.data.transfer) {
+    if (task.action === "compress" && task.data.transfer) {
       transferrables.push(task.data.arrayBuffer);
     }
 
-    if (task.action === 'decompress' && task.data.transfer) {
+    if (task.action === "decompress" && task.data.transfer) {
       transferrables.push(task.data.arrayBuffer);
     }
 
@@ -289,13 +338,13 @@ export default class Workers {
     e: MessageEvent<
       | {
           id: number;
-          action: 'fetch';
+          action: "fetch";
           data: ArrayBuffer;
           error?: any;
         }
       | {
           id: number;
-          action: 'exr';
+          action: "exr";
           data: {
             data: ArrayBuffer;
             width: number;
@@ -308,23 +357,29 @@ export default class Workers {
         }
       | {
           id: number;
-          action: 'bitmapToArrayBuffer';
+          action: "bitmapToArrayBuffer";
           data: TaskBitmapToArrayBufferReturn;
           error?: any;
         }
       | {
           id: number;
-          action: 'compress';
+          action: "compress";
           data: TaskCompressReturn;
           error?: any;
         }
       | {
           id: number;
-          action: 'decompress';
+          action: "decompress";
           data: TaskDecompressReturn;
           error?: any;
         }
-    >,
+      | {
+          id: number;
+          action: "processNav";
+          data: { navPoint: Point2D; dpName: string[] };
+          error?: any;
+        }
+    >
   ) {
     const { id, action, data, error } = e.data;
     const task = this.taskMap.get(id);
@@ -337,9 +392,9 @@ export default class Workers {
 
     if (error) task.reject(error);
     else {
-      if (action === 'fetch') {
+      if (action === "fetch") {
         (task as TaskFetch).resolve(data);
-      } else if (action === 'exr') {
+      } else if (action === "exr") {
         const { data: exrData, width, height, format, type, arrayType } = data;
         (task as TaskExr).resolve({
           data: exrData,
@@ -349,10 +404,15 @@ export default class Workers {
           type,
           arrayType,
         });
-      } else if (action === 'bitmapToArrayBuffer') {
+      } else if (action === "bitmapToArrayBuffer") {
         (task as TaskBitmapToArrayBuffer).resolve(data);
-      } else if (action === 'compress' || action === 'decompress') {
+      } else if (action === "compress" || action === "decompress") {
         (task as TaskCompress).resolve(data);
+      } else if (action === "processNav") {
+        (task as TaskNavPoint).resolve({
+          navPoint: data.navPoint, // 입력 좌표
+          dpName: data.dpName,
+        });
       } else {
         throw new Error(`Unknown action: ${action}`);
       }
