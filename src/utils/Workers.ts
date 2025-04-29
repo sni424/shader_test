@@ -46,11 +46,11 @@ type TaskNavPoint = {
   id: number;
   action: "processNav";
   data: {
-    navPoint: Point2D;
+    navPointArray: Point2D[];
     dpInfoArray: DpInfoType[];
     wallData: Walls;
   };
-  resolve: (value: { navPoint: [number, number]; dpName: string[] }) => void;
+  resolve: (value: [{ navPoint: Point2D; dpName: string[] | [] }]) => void;
   reject: (err: any) => void;
 };
 
@@ -120,13 +120,19 @@ export default class Workers {
   public static async processNavPoints(
     navPoints: Point2D[],
     dpInfoArray: DpInfoType[],
-    wallData: Walls
+    wallData: Walls,
+    parts: number = navigator.hardwareConcurrency
   ): Promise<{ navPoint: [number, number]; dpName: string[] }[]> {
-    const promises = navPoints.map((point) =>
-      this.instance._processNavPoint(point, dpInfoArray, wallData)
-    );
-    const results = await Promise.all(promises);
-    return results;
+    const total = navPoints.length;
+    const promises = Array.from({ length: parts }, (_, part) => {
+      const start = Math.floor((part * total) / parts);
+      const end = Math.floor(((part + 1) * total) / parts);
+      const batch = navPoints.slice(start, end);
+      return this.instance._processNavPoint(batch, dpInfoArray, wallData);
+    });
+
+    const allResults = await Promise.all(promises);
+    return allResults.flat();
   }
 
   // trasnfer이면 worker로 넘겨버려서 앞으로 buffer을 사용할 수 없음
@@ -163,24 +169,29 @@ export default class Workers {
     return this.instance._bitmapToArrayBuffer(bitmap);
   }
   private async _processNavPoint(
-    navPoint: Point2D,
+    navPointArray: Point2D[],
     dpInfoArray: DpInfoType[],
     wallData: Walls
-  ): Promise<{ navPoint: [number, number]; dpName: string[] }> {
+  ): Promise<{ navPoint: [number, number]; dpName: string[] }[]> {
     const id = this.taskId++;
-    const prom = new Promise<{ navPoint: [number, number]; dpName: string[] }>(
-      (resolve, reject) => {
-        const task: TaskNavPoint = {
-          id,
-          action: "processNav",
-          data: { navPoint, dpInfoArray, wallData },
-          resolve,
-          reject,
-        };
-        this.taskMap.set(id, task);
-        this.enqueue(task);
-      }
-    );
+    const prom = new Promise<
+      [
+        {
+          navPoint: [number, number];
+          dpName: string[] | [];
+        }
+      ]
+    >((resolve, reject) => {
+      const task: TaskNavPoint = {
+        id,
+        action: "processNav",
+        data: { navPointArray, dpInfoArray, wallData },
+        resolve,
+        reject,
+      };
+      this.taskMap.set(id, task);
+      this.enqueue(task);
+    });
     return prom.then((res) => {
       return res;
     });
@@ -409,10 +420,7 @@ export default class Workers {
       } else if (action === "compress" || action === "decompress") {
         (task as TaskCompress).resolve(data);
       } else if (action === "processNav") {
-        (task as TaskNavPoint).resolve({
-          navPoint: data.navPoint, // 입력 좌표
-          dpName: data.dpName,
-        });
+        (task as TaskNavPoint).resolve(data);
       } else {
         throw new Error(`Unknown action: ${action}`);
       }
