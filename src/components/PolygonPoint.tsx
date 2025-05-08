@@ -1,49 +1,14 @@
 import { Line } from '@react-three/drei';
 import * as THREE from "three"
-import { isIntersectFromPoints, isPointOnLine, newRoomColorString } from '../utils/collectFun';
+import { isIntersectFromPoints, newRoomColorString } from '../utils/collectFun';
 import { useThree } from '@react-three/fiber';
 import { useEffect, useState } from 'react';
 import { useAtomValue } from 'jotai';
 import { modelAtom } from '../utils/atom';
-import { ConvexHull } from 'three/examples/jsm/Addons.js';
+// import { ConvexHull } from 'three/examples/jsm/Addons.js';
 type Point2D = [number, number];
-type Point3D = [number, number, number];
+// type Point3D = [number, number, number];
 
-const roomPoint: Point2D[] = [
-    [3.1679208290735614, 1.0676378852121575],
-    [1.1359496777171083, 1.0818637521514691],
-    [1.1637169242286514, -0.14416962530295616],
-    [-3.7514122353386616, -0.1040531736718628],
-    [-3.7404402574282383, 4.709813234226702],
-    [3.1458731169374294, 4.690934263659383],
-    [3.163148624080965, 1.0914892211385294],
-];
-
-const masterRoom: Point2D[] = [
-    [-4.294347553547738, 4.607913418550377],
-    [-4.20627968333865, -0.04620241872076547],
-    [-8.155577040673885, -0.1301539113372543],
-    [-8.169466228359557, 4.636475519934749],
-    [-4.287239821678524, 4.692289375564105],
-]
-
-const alphaRoom: Point2D[] = [
-    [3.2050294228299965, 4.561557282127942],
-    [3.1161075851584683, 1.0338200032881337],
-    [1.5658398436651169, 1.039513247954269],
-    [1.5086272633106006, 4.657032551449353],
-    [3.276646203063997, 4.6658227944589825]
-]
-
-const bedRoom1: Point2D[] = [
-
-    [6.6393446294581056, 0.979095050403372],
-    [6.567667876402825, 4.670969795489089],
-    [9.371569343004019, 4.595773901067477],
-    [9.39850672379448, 1.2412015806742098],
-    [7.348498594905954, 1.340498517008008],
-    [7.3418424219951675, 0.983810327425368]
-]
 
 const wallPoint: Point2D[] = [
     [8.47064304626679, -2.3914815573361468],
@@ -92,10 +57,15 @@ const wallPoint: Point2D[] = [
     [-8.21364198328017, 1.215492988968255],
     [-8.232138202994427, -0.1485398630016327],
     [-6.712308172602971, -0.1368040241752686],
-    [-6.726584564408845, -0.13442014839693717],
-    [-5.9257412878424125, -0.14685461968362334],
-    [-5.301696125516181, -0.1484145168592349],
-    [-5.308268437209603, -0.46823405233231463],
+    [-6.717709551565815, -0.3020549689307602],
+    [-9.435230260594155, -0.2037029707147464],
+    [-9.389088584373972, -2.2160076491876604],
+    [-8.771468449894455, -2.8215844660268075],
+    [-5.50504487799236, -2.804497974218382],
+    [-5.52342174342715, -0.33697209051469557],
+    [-5.973302021429329, -0.3135771224034981],
+    [-5.9469212550855906, -0.12796322519274733],
+    [-5.31663114221851, -0.12426281157497332],
     [-5.309828067592773, -2.699750915810092],
     [-4.281312281422315, -2.6942577942440487],
     [-4.29065202611422, -1.7915577529451148],
@@ -112,6 +82,22 @@ const wallPoint: Point2D[] = [
     [-3.508616911674922, -0.15577802177032257],
     [-3.5044082637196468, -2.7434426078550054],
     [-2.758352210171857, -2.7746377748759734],
+    [-2.7568202078571793, -2.889294292364327],
+    [-3.8034505049782665, -2.882677380435239],
+    [-3.7946839543573962, -3.494616926805112],
+    [-3.3143688144835064, -3.518123036127567],
+    [-3.319706456156121, -3.5716448289999287],
+    [-4.054570201209506, -3.5473267239853397],
+    [-4.771958112510788, -3.5244426237617246],
+    [-5.440994913754895, -3.525606057775457],
+    [-5.433244532850648, -4.561920864988817],
+    [-4.087861695112663, -4.545945661963804],
+    [-4.077363230834872, -4.073270294720789],
+    [-3.8002873443442695, -4.137268059401542],
+    [-3.808292364701966, -4.437383865599656],
+    [-2.916421674464453, -4.422144347192604],
+    [-2.933488852709246, -3.6267628978332764],
+    [-2.7198364097221943, -3.71395445863096],
     [-2.7147605617437263, -4.378237704526104],
     [1.1818292155937027, -4.394035035646912],
     [1.1932182084199778, -3.567887799606652],
@@ -121,6 +107,14 @@ const wallPoint: Point2D[] = [
     [3.940198372354564, -2.648768992893775],
     [1.189730935086208, -2.7558821606364905],
     [1.189388405638293, -0.11716850376572774],
+    [1.8804027729291326, -0.12340849148065725],
+    [1.9086247155900942, -0.28829434072393667],
+    [1.5307236140212441, -0.31333506258450483],
+    [1.4877051851197525, -2.53164233730907],
+    [2.9741027593446523, -2.436133728077291],
+    [3.0315139378432105, -0.28292817326864256],
+    [2.6627111178803533, -0.30416091826251374],
+    [2.6763860337209273, -0.11199720931036339],
     [3.222440211143511, -0.11867900327026354],
     [3.2254304708838544, -0.25290740910235754],
     [3.2144325366862723, -1.7930565491758481],
@@ -183,11 +177,11 @@ const walls: [number, number, number][] = [
     [45, 46, -1],
     [46, 47, -1],
     [47, 48, -1],
-    [48, 49, 7],
-    [49, 50, 7],
-    [50, 51, 7],
-    [51, 52, 7],
-    [52, 53, 7],
+    [48, 49, -1],
+    [49, 50, -1],
+    [50, 51, -1],
+    [51, 52, -1],
+    [52, 53, -1],
     [53, 54, 7],
     [54, 55, 7],
     [55, 56, 7],
@@ -195,22 +189,22 @@ const walls: [number, number, number][] = [
     [57, 58, 7],
     [58, 59, 7],
     [59, 60, 7],
-    [60, 61, 6],
-    [61, 62, -1],
-    [62, 63, -1],
-    [63, 64, 8],
-    [64, 65, -1],
-    [65, 66, -1],
+    [60, 61, 7],
+    [61, 62, 7],
+    [62, 63, 7],
+    [63, 64, 7],
+    [64, 65, 7],
+    [65, 66, 6],
     [66, 67, -1],
     [67, 68, -1],
-    [68, 69, -1],
+    [68, 69, 8],
     [69, 70, -1],
     [70, 71, -1],
     [71, 72, -1],
     [72, 73, -1],
     [73, 74, -1],
     [74, 75, -1],
-    [75, 76, 1],
+    [75, 76, -1],
     [76, 77, -1],
     [77, 78, -1],
     [78, 79, -1],
@@ -218,31 +212,60 @@ const walls: [number, number, number][] = [
     [80, 81, -1],
     [81, 82, -1],
     [82, 83, -1],
-    [83, 84, 1],
-    [84, 85, 0],
-    [85, 0, 0]
+    [83, 84, -1],
+    [84, 85, -1],
+    [85, 86, -1],
+    [86, 87, -1],
+    [87, 88, -1],
+    [88, 89, -1],
+    [89, 90, -1],
+    [90, 91, -1],
+    [91, 92, -1],
+    [92, 93, -1],
+    [93, 94, -1],
+    [94, 95, -1],
+    [95, 96, -1],
+    [96, 97, -1],
+    [97, 98, -1],
+    [98, 99, -1],
+    [99, 100, -1],
+    [100, 101, -1],
+    [101, 102, -1],
+    [102, 103, -1],
+    [103, 104, -1],
+    [104, 105, 1],
+    [105, 106, -1],
+    [106, 107, -1],
+    [107, 108, -1],
+    [108, 109, -1],
+    [109, 110, -1],
+    [110, 111, -1],
+    [111, 112, -1],
+    [112, 113, 1],
+    [113, 114, 0],
+    [114, 0, 0]
 ]
 
-const bed2Mesh = {
-    minX: 6.112507203012343, maxX: 6.362489363760102, minY: 1.1725017856508466, maxY: 4.732323544129732
-}
+// const bed2Mesh = {
+//     minX: 6.112507203012343, maxX: 6.362489363760102, minY: 1.1725017856508466, maxY: 4.732323544129732
+// }
 
-const bed2FrameMesh = {
-    minX: 6.338491431225919, maxX:
-        6.36250860487763, minY:
-        1.4482526176576578, maxY: 4.003315868565173
-}
+// const bed2FrameMesh = {
+//     minX: 6.338491431225919, maxX:
+//         6.36250860487763, minY:
+//         1.4482526176576578, maxY: 4.003315868565173
+// }
 
-const bed1Mesh = {
-    minX: 6.496830691122781, maxX: 6.566571905372811,
-    minY: 3.3928398684427736, maxY: 3.462581150289729
-}
+// const bed1Mesh = {
+//     minX: 6.496830691122781, maxX: 6.566571905372811,
+//     minY: 3.3928398684427736, maxY: 3.462581150289729
+// }
 
-const bed1MeshWall = {
-    minX: 6.529773965063485, maxX: 7.089774064028391,
-    minY:
-        4.72864707768928, maxY: 4.73364726410977
-}
+// const bed1MeshWall = {
+//     minX: 6.529773965063485, maxX: 7.089774064028391,
+//     minY:
+//         4.72864707768928, maxY: 4.73364726410977
+// }
 
 const PolygonPoint = () => {
 
@@ -283,48 +306,48 @@ const PolygonPoint = () => {
     };
 
 
-    function getOrderedPolygonFromGeometry(geometry: THREE.BufferGeometry): Point2D[] {
-        const edges = new THREE.EdgesGeometry(geometry);
-        const pos = edges.attributes.position as THREE.BufferAttribute;
+    // function getOrderedPolygonFromGeometry(geometry: THREE.BufferGeometry): Point2D[] {
+    //     const edges = new THREE.EdgesGeometry(geometry);
+    //     const pos = edges.attributes.position as THREE.BufferAttribute;
 
-        // 1) 세그먼트 쌍 배열로 수집
-        const segments: [Point2D, Point2D][] = [];
-        for (let i = 0; i < pos.count; i += 2) {
-            const a: Point2D = [pos.getX(i), pos.getZ(i)];
-            const b: Point2D = [pos.getX(i + 1), pos.getZ(i + 1)];
-            segments.push([a, b]);
-        }
+    //     // 1) 세그먼트 쌍 배열로 수집
+    //     const segments: [Point2D, Point2D][] = [];
+    //     for (let i = 0; i < pos.count; i += 2) {
+    //         const a: Point2D = [pos.getX(i), pos.getZ(i)];
+    //         const b: Point2D = [pos.getX(i + 1), pos.getZ(i + 1)];
+    //         segments.push([a, b]);
+    //     }
 
-        // 2) 정점별 인접 리스트 생성
-        const key = (p: Point2D) => `${p[0]},${p[1]}`;
-        const adj = new Map<string, Point2D[]>();
-        for (const [a, b] of segments) {
-            const ka = key(a), kb = key(b);
-            if (!adj.has(ka)) adj.set(ka, []);
-            if (!adj.has(kb)) adj.set(kb, []);
-            adj.get(ka)!.push(b);
-            adj.get(kb)!.push(a);
-        }
+    //     // 2) 정점별 인접 리스트 생성
+    //     const key = (p: Point2D) => `${p[0]},${p[1]}`;
+    //     const adj = new Map<string, Point2D[]>();
+    //     for (const [a, b] of segments) {
+    //         const ka = key(a), kb = key(b);
+    //         if (!adj.has(ka)) adj.set(ka, []);
+    //         if (!adj.has(kb)) adj.set(kb, []);
+    //         adj.get(ka)!.push(b);
+    //         adj.get(kb)!.push(a);
+    //     }
 
-        // 3) 루프 시작점 찾기 (임의의 정점)
-        const startKey = key(segments[0][0]);
-        let current = segments[0][0];
-        let prevKey: string | null = null;
-        const polygon: Point2D[] = [];
+    //     // 3) 루프 시작점 찾기 (임의의 정점)
+    //     const startKey = key(segments[0][0]);
+    //     let current = segments[0][0];
+    //     let prevKey: string | null = null;
+    //     const polygon: Point2D[] = [];
 
-        // 4) 순회하며 폴리곤 점 순서대로 수집
-        do {
-            polygon.push(current);
-            const neighbors = adj.get(key(current))!;
-            // 이전 정점이 아닌 다음 정점 선택
-            const next = neighbors.find(p => key(p) !== prevKey);
-            if (!next) break;
-            prevKey = key(current);
-            current = next;
-        } while (key(current) !== startKey);
+    //     // 4) 순회하며 폴리곤 점 순서대로 수집
+    //     do {
+    //         polygon.push(current);
+    //         const neighbors = adj.get(key(current))!;
+    //         // 이전 정점이 아닌 다음 정점 선택
+    //         const next = neighbors.find(p => key(p) !== prevKey);
+    //         if (!next) break;
+    //         prevKey = key(current);
+    //         current = next;
+    //     } while (key(current) !== startKey);
 
-        return polygon;
-    }
+    //     return polygon;
+    // }
 
 
 
@@ -435,37 +458,44 @@ const PolygonPoint = () => {
 
     useEffect(() => {
         if (scene && glbModel.length > 1) {
-            // const boundingBox = new THREE.Box3().setFromObject(glbModel);
-            const mesh = glbModel[0].children[0] as THREE.Mesh
-            const geometry = mesh.geometry as THREE.BufferGeometry;
-            // const material = new THREE.LineBasicMaterial({ color: 0xffffff });
+            glbModel.forEach(child => {
+                child.children.forEach(data => {
+                    if (data instanceof THREE.Mesh) {
+                        if (data.name === "nav") {
+                            const mesh = data
+                            const geometry = mesh.geometry as THREE.BufferGeometry;
+                            if (!geometry.boundingBox) {
+                                return console.warn("no geometry")
+                            }
+                            const polygon: Point2D[] = getContourPolygon2D(mesh);
+                            const newPoint = meshInsidePoint(polygon, geometry.boundingBox?.min, geometry.boundingBox?.max)
 
-            // const wireframe = new THREE.LineSegments(edges, material);
-            // scene.add(wireframe)
-            // setMeshPolygon(newSegments)
+                            setNavPoint(newPoint)
+
+                            setMeshPolygon(polygon)
+                        } else {
+                            const boundingBox = new THREE.Box3().setFromObject(data);
+
+                            const { min, max } = boundingBox
+
+
+                            const objectBoxPoint = boxPoint(min, max)
+
+                            if (objectBoxPoint) {
+                                setObjectBoxPoint(pre => [...pre, objectBoxPoint])
+                            }
+                        }
+                    }
+                })
+            })
 
 
 
-            if (!geometry.boundingBox) {
-                return console.warn("no geometry")
-            }
-            // console.log("edgesGeom", polygon)
 
 
 
-            // const polygon: Point2D[] = getOrderedPolygonFromGeometry(geometry);
-            const polygon: Point2D[] = getContourPolygon2D(mesh);
-            const newPoint = meshInsidePoint(polygon, geometry.boundingBox?.min, geometry.boundingBox?.max)
-            setNavPoint(newPoint)
-            setMeshPolygon(polygon)
-            // 라인 머티리얼 생성
-            // const lineMat = new THREE.LineBasicMaterial({ color: 0xff0000 });
 
-            // LineSegments로 테두리 메쉬 생성
-            // const outline = new THREE.LineSegments(edgesGeom, lineMat);
 
-            // 씬에 추가
-            // scene.add(outline);
 
             glbModel[1].children[0].children.forEach(child => {
 
@@ -475,6 +505,7 @@ const PolygonPoint = () => {
 
 
                 const objectBoxPoint = boxPoint(min, max)
+
                 if (objectBoxPoint) {
                     setObjectBoxPoint(pre => [...pre, objectBoxPoint])
                 }
@@ -484,23 +515,6 @@ const PolygonPoint = () => {
     }, [glbModel, scene])
 
 
-    const getBoundingBox = (polygon: Point2D[]): {
-        minX: number;
-        maxX: number;
-        minY: number;
-        maxY: number;
-    } => {
-
-        const xs = polygon.map((p) => p[0]);
-        const ys = polygon.map((p) => p[1]);
-
-        return {
-            minX: Math.min(...xs),
-            maxX: Math.max(...xs),
-            minY: Math.min(...ys),
-            maxY: Math.max(...ys),
-        };
-    };
 
     const meshInsidePoint = (
         polygon: Point2D[],
@@ -523,22 +537,6 @@ const PolygonPoint = () => {
         return points;
     };
 
-    const generateGridPointsInsidePolygon = (
-        polygon: Point2D[],
-    ): Point2D[] => {
-        const points: Point2D[] = [];
-        const { minX, maxX, minY, maxY } = getBoundingBox(polygon);
-
-        for (let x = minX; x <= maxX; x += maxX === minX || maxX - minX > 0.1 ? 0.1 : (maxX - minX) / 2) {
-            for (let y = minY; y <= maxY; y += maxY === minY || maxY - minY > 0.1 ? 0.1 : (maxY - minY) / 2) {
-                const point: Point2D = [x, y];
-                if (isPointInPolygon(point, polygon)) {
-                    points.push(point); // 다각형 내부 포인트만 추가
-                }
-            }
-        }
-        return points;
-    };
     const boxPoint = (min: THREE.Vector3, max: THREE.Vector3) => {
         const points: Point2D[] = [];
         if (!scene) {
@@ -556,71 +554,42 @@ const PolygonPoint = () => {
     }
 
 
+
     // const checkBoxToObject = (roomArray: Point2D[], objectArray: Point2D[]): boolean => {
-    //     const resultArray = []
     //     for (const roomPoint of roomArray) {
     //         for (const boxPoint of objectArray) {
+    //             // 이 경로가 어떤 벽과 교차하는지 추적
+    //             let intersectsAnyWall = false;
     //             for (const wallPointIndex of walls) {
     //                 const result = isIntersectFromPoints(
     //                     [roomPoint, boxPoint],
     //                     [wallPoint[wallPointIndex[0]], wallPoint[wallPointIndex[1]]]
     //                 );
     //                 if (result) {
-    //                     continue
-    //                 } else {
-    //                     resultArray.push(result)
+    //                     // const lineInPoint = isPointOnLine(boxPoint, wallPoint[wallPointIndex[0]], wallPoint[wallPointIndex[1]])
+
+    //                     // 하나라도 교차하면 이 쌍은 유효하지 않음
+    //                     // if (isPointOnLine(boxPoint, wallPoint[wallPointIndex[0]], wallPoint[wallPointIndex[1]])) {
+    //                     //     intersectsAnyWall = false;
+    //                     //     break;
+    //                     // } else {
+    //                     intersectsAnyWall = true;
+    //                     break;
+    //                     // }
+
     //                 }
+    //             }
+    //             if (!intersectsAnyWall) {
+    //                 // 모든 벽과 교차하지 않는 경로 발견
+    //                 return true;
     //             }
     //         }
     //     }
-    //     if (resultArray.every(child => child === false)) {
-    //         return true
-    //     } else {
-    //         return false;
-    //     }
+    //     // 유효한 경로가 없음
+    //     return false;
     // };
 
-    const checkBoxToObject = (roomArray: Point2D[], objectArray: Point2D[]): boolean => {
-        for (const roomPoint of roomArray) {
-            for (const boxPoint of objectArray) {
-                // 이 경로가 어떤 벽과 교차하는지 추적
-                let intersectsAnyWall = false;
-                for (const wallPointIndex of walls) {
-                    const result = isIntersectFromPoints(
-                        [roomPoint, boxPoint],
-                        [wallPoint[wallPointIndex[0]], wallPoint[wallPointIndex[1]]]
-                    );
-                    if (result) {
-                        const lineInPoint = isPointOnLine(boxPoint, wallPoint[wallPointIndex[0]], wallPoint[wallPointIndex[1]])
 
-                        // 하나라도 교차하면 이 쌍은 유효하지 않음
-                        // if (isPointOnLine(boxPoint, wallPoint[wallPointIndex[0]], wallPoint[wallPointIndex[1]])) {
-                        //     intersectsAnyWall = false;
-                        //     break;
-                        // } else {
-                        intersectsAnyWall = true;
-                        break;
-                        // }
-
-                    }
-                }
-                if (!intersectsAnyWall) {
-                    // 모든 벽과 교차하지 않는 경로 발견
-                    return true;
-                }
-            }
-        }
-        // 유효한 경로가 없음
-        return false;
-    };
-
-
-
-
-    // const generatedPoints = generateGridPointsInsidePolygon(roomPoint);
-    // const masterRoomPoints = generateGridPointsInsidePolygon(masterRoom);
-    // const alphaRoomPoint = generateGridPointsInsidePolygon(alphaRoom);
-    // const bedRoom1Point = generateGridPointsInsidePolygon(bedRoom1);
     const Polygon = ({ points }: { points: Point2D[] }) => {
         const linePoints = points
             .map((p) => new THREE.Vector3(p[0], p[1], 0))
@@ -651,22 +620,14 @@ const PolygonPoint = () => {
     //     console.log("generatedPoints", occlusionResult)
     // }
 
-    // if (masterRoomPoints && newBoxPoints) {
-    //     const occlusionResult = checkBoxToObject(masterRoomPoints, newBoxPoints)
-    //     console.log("masterRoomPoints", occlusionResult)
-    // }
-    // if (alphaRoomPoint && newBoxPoints) {
-    //     const occlusionResult = checkBoxToObject(alphaRoomPoint, newBoxPoints)
-    //     console.log("alphaRoomPoint", occlusionResult)
-    // }
 
-    if (meshPolygon && objectBoxPoint.length > 0) {
-        objectBoxPoint.forEach(child => {
-            const occlusionResult = checkBoxToObject(meshPolygon, child)
-            console.log("bedRoom1Point", occlusionResult)
-        })
+    // if (meshPolygon && objectBoxPoint.length > 0) {
+    //     objectBoxPoint.forEach(child => {
+    //         const occlusionResult = checkBoxToObject(meshPolygon, child)
+    //         console.log("bedRoom1Point", occlusionResult)
+    //     })
 
-    }
+    // }
 
 
 
@@ -675,15 +636,6 @@ const PolygonPoint = () => {
 
     return (
         <>
-            {/* <Polygon points={roomPoint} />
-            <Polygon points={masterRoom} />
-            <Polygon points={alphaRoom} />
-            <Polygon points={bedRoom1} /> */}
-            {/* <Points points={generatedPoints} />
-            <Points points={masterRoomPoints} /> */}
-            {/* {newBoxPoints && <Points points={newBoxPoints} />} */}
-
-            {/* <Points points={bedRoom1Point} /> */}
             {objectBoxPoint.length > 0 &&
                 objectBoxPoint.map((child, index) => {
                     return <Points key={`pointMesh_${index}`} points={child} color={newRoomColorString(index)} />
