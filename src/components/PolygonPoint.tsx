@@ -478,6 +478,7 @@ const PolygonPoint = () => {
 
                             const { min, max } = boundingBox
 
+                            // const newPoint = meshInsidePoint(wallPoint, min, max)
 
                             const objectBoxPoint = boxPoint(min, max)
 
@@ -485,34 +486,80 @@ const PolygonPoint = () => {
                                 setObjectBoxPoint(pre => [...pre, objectBoxPoint])
                             }
                         }
+                    } else if (data instanceof THREE.Group) {
+                        for (const child of data.children) {
+                            if (child instanceof THREE.Mesh) {
+                                const boundingBox = new THREE.Box3().setFromObject(child);
+
+                                const { min, max } = boundingBox
+
+
+                                if (child.name.includes("침실1dp004_17")) {
+                                    const newPoint = isMeshInsidePoint(wallPoint, min, max)
+                                    console.log("newPoint", newPoint, child.name, boundingBox, wallPoint)
+                                    const objectBoxPoint = boxPoint(min, max)
+
+                                    if (objectBoxPoint) {
+                                        setObjectBoxPoint(pre => [...pre, objectBoxPoint])
+                                    }
+                                }
+
+                            }
+                        }
                     }
                 })
             })
 
 
-
-
-
-
-
-
-
-            glbModel[1].children[0].children.forEach(child => {
-
-                const boundingBox = new THREE.Box3().setFromObject(child);
-
-                const { min, max } = boundingBox
-
-
-                const objectBoxPoint = boxPoint(min, max)
-
-                if (objectBoxPoint) {
-                    setObjectBoxPoint(pre => [...pre, objectBoxPoint])
-                }
-            })
-
         }
     }, [glbModel, scene])
+
+    const isMeshInsidePoint = (
+        polygon: Point2D[],
+        min: THREE.Vector3,
+        max: THREE.Vector3,
+    ): boolean => {
+
+
+        for (let x = min.x; x <= max.x; x += max.x === min.x || max.x - min.x > 0.1 ?
+            0.1 : 0.01) {
+
+            for (let y = min.z; y <= max.z; y += min.z || max.z - min.z > 0.1
+                ? 0.1 : 0.01) {
+                const point: Point2D = [x, y];
+
+
+                if (isPointInPolygon(point, polygon)) {
+
+                    return true;
+                }
+            }
+        }
+        return false
+    };
+
+    const isMeshOutsidePoint = (
+        polygon: Point2D[],
+        min: THREE.Vector3,
+        max: THREE.Vector3,
+    ): boolean => {
+
+
+
+        for (let x = min.x; x <= max.x; x += max.x === min.x || max.x - min.x > 0.1 ?
+            0.1 : (max.x - min.x) / 2) {
+            for (let y = min.z; y <= max.z; y += max.z === min.z || max.z - min.z > 0.1
+                ? 0.1 : (max.y - min.y) / 2) {
+                const point: Point2D = [x, y];
+                if (!isPointInPolygon(point, polygon)) {
+                    return true
+                }
+            }
+        }
+        return false;
+    };
+
+
 
 
 

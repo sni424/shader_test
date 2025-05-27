@@ -17,6 +17,8 @@ import Type2PredrawLine from "./components/Type2PredrawLine";
 import OcclusionTest from "./components/OcclusionTest";
 import CheckCrossLine from "./components/CheckCrossLine";
 import PolygonPoint from "./components/PolygonPoint";
+import MaterialComparisonTable from "./components/MaterialComparisonTable";
+import TransmissionTest from "./components/TransmissionTest";
 
 const step = Array.from({ length: 11 }, (_, i) => i + 1);
 
@@ -135,6 +137,8 @@ export default function App() {
           height: "100vh"
         }}
       >
+
+
         <Canvas>
 
           {pageStep === 1 &&
@@ -182,9 +186,11 @@ export default function App() {
 
           }
           {pageStep === 8 &&
-            <Type2PredrawLine dimensionsClick={dimensionsClick}
-              room={room}
-            />}
+            // <Type2PredrawLine dimensionsClick={dimensionsClick}
+            //   room={room}
+            // />
+            <TransmissionTest />
+          }
           {pageStep === 9 && <OcclusionTest />}
           {pageStep === 10 && <CheckCrossLine />}
           {pageStep === 11 &&

@@ -6,10 +6,15 @@ import * as THREE from "three"
 import dp004 from "/nav2.glb?url"
 import base from "/base.glb?url"
 import bedRoomObject from "/침실1dp.003.glb?url"
+import 침실2_base from "/침실2_base.glb?url"
+import 침실1dp_004 from "/침실1dp_004.glb?url"
+import main9 from "/main9.glb?url"
+import main10 from "/main10.glb?url"
+import main11 from "/main11.glb?url"
 import { useSetAtom } from 'jotai';
 import { modelAtom } from '../utils/atom';
 
-const modelArray = [dp004, bedRoomObject, base]
+const modelArray = [dp004, bedRoomObject, base, main9, main10, main11, 침실2_base, 침실1dp_004]
 const loader = new GLTFLoader();
 
 

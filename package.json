@@ -12,10 +12,13 @@
   "dependencies": {
     "@react-three/drei": "^9.120.4",
     "@react-three/fiber": "^9.0.4",
+    "@types/jspdf": "^2.0.0",
     "@types/three": "^0.173.0",
     "convex-hull": "^1.0.3",
     "gsap": "^3.12.7",
+    "html2canvas": "^1.4.1",
     "jotai": "^2.12.1",
+    "jspdf": "^3.0.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "three": "^0.173.0"
