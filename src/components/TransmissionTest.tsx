@@ -71,8 +71,6 @@ const TransmissionTest = () => {
                     transmissionFunctions + '\nvoid main()'
                 );
 
-                console.log('Custom transmission shader applied');
-                console.log('Fragment shader:', shader.fragmentShader);
             };
 
             materialRef.current.needsUpdate = true;
