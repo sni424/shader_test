@@ -18,8 +18,8 @@ const modelArray = [dp004, bedRoomObject, base, main9, main10, main11, 침실2_b
 const loader = new GLTFLoader();
 
 
-type ModelScene = THREE.Group;
-type LoadModelResult = ModelScene[];
+export type ModelScene = THREE.Group;
+export type LoadModelResult = ModelScene[];
 
 // 모델 로드 함수
 const loadModels = async (modelArray: string[]): Promise<LoadModelResult> => {

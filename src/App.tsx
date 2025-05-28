@@ -19,6 +19,7 @@ import CheckCrossLine from "./components/CheckCrossLine";
 import PolygonPoint from "./components/PolygonPoint";
 import MaterialComparisonTable from "./components/MaterialComparisonTable";
 import TransmissionTest from "./components/TransmissionTest";
+import dancing_hall_1k from "/dancing_hall_1k.hdr?url"
 
 const step = Array.from({ length: 11 }, (_, i) => i + 1);
 
@@ -199,7 +200,7 @@ export default function App() {
               <CheckDimensions />
             </>
           }
-          <Environment preset="city" />
+          <Environment files={dancing_hall_1k} />
         </Canvas>
       </div>
     </div>
