@@ -1,4 +1,5 @@
 import { Canvas } from "@react-three/fiber";
+import { Stats } from '@react-three/drei';
 import BoxImageTransition from "./components/BoxImageTransition";
 import { Environment, OrbitControls } from "@react-three/drei";
 import { useState } from "react";
@@ -19,6 +20,9 @@ import CheckCrossLine from "./components/CheckCrossLine";
 import PolygonPoint from "./components/PolygonPoint";
 import MaterialComparisonTable from "./components/MaterialComparisonTable";
 import TransmissionTest from "./components/TransmissionTest";
+import dancing_hall_1k from "/dancing_hall_1k.hdr?url"
+import CheckSharpen from "./components/CheckSharpen";
+import CubeCameraTest from "./components/CubeCameraTest";
 
 const step = Array.from({ length: 11 }, (_, i) => i + 1);
 
@@ -28,6 +32,10 @@ export default function App() {
   const [dimensionsClick, setDimensionsClick] = useState(false)
   const [room, setRoom] = useState<string>("거실")
   const [pageStep, setPageStep] = useState(1)
+
+  const [strength, setStrength] = useState(0.0); // 샤프닝 강도 상태
+  const [opacity, setOpacity] = useState(1.0); // 블렌딩 투명도 상태
+  const [roughness, setRoughness] = useState(0.0)
   const clickFun = () => {
     setClick(pre => !pre)
   }
@@ -64,6 +72,30 @@ export default function App() {
           )
         })}
       </div>
+      <div style={{
+        marginTop: "10%",
+        position: "absolute",
+        zIndex: "10"
+      }}>
+        <input
+          type="range"
+          style={{
+            padding: '10px 10px',
+            fontSize: '16px',
+            cursor: 'pointer',
+
+          }}
+          min={0.0}
+          max={1.0}
+          step={0.01}
+          value={roughness}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+
+            setRoughness(parseFloat(e.target.value));
+          }}
+        />
+        <span>{roughness}</span>
+      </div>
       <button
         style={{
           position: "absolute",
@@ -80,6 +112,43 @@ export default function App() {
       >
         전환하기
       </button>
+
+
+      {pageStep === 2 &&
+
+        <div
+
+          style={{
+            position: "absolute",
+            zIndex: "10",
+            bottom: "2.5%",
+            left: "50%",
+            transform: "translateX(-50%)"
+          }}>
+          <label>
+            Sharpen Strength: {strength.toFixed(2)}
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.01"
+              value={strength}
+              onChange={(e) => setStrength(parseFloat(e.target.value))}
+            />
+          </label>
+          <label>
+            Blend Opacity: {opacity.toFixed(2)}
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.01"
+              value={opacity}
+              onChange={(e) => setOpacity(parseFloat(e.target.value))}
+            />
+          </label>
+        </div>
+      }
       {pageStep === 7 || pageStep === 6 || pageStep === 8 ?
         <button
           style={{
@@ -140,17 +209,21 @@ export default function App() {
 
 
         <Canvas>
-
+          <Stats />
           {pageStep === 1 &&
+            <CubeCameraTest roughness={roughness} />
+          }
+          {pageStep === 12 &&
             <ModelTextureTransition isClick={isClick} />
           }
           {pageStep === 2 &&
-            <BoxImageTransition isClick={isClick} />
+            <CheckSharpen strength={strength} opacity={opacity} />
+            // <BoxImageTransition isClick={isClick} />
           }
           {pageStep === 3 &&
             <ModelOnBeforeShader isClick={isClick} />
           }
-          {pageStep !== 4 && <Environment preset="city" />}
+          {/* {pageStep !== 4 && <Environment preset="city" />} */}
           {pageStep === 4 &&
             <CheckLightMap isClick={isClick} />
           }
@@ -160,8 +233,6 @@ export default function App() {
           {pageStep === 6 &&
             <CheckDimensions />
           }
-
-          <OrbitControls />
           {pageStep === 6 &&
             <>
               <PointMark />
@@ -199,7 +270,10 @@ export default function App() {
               <CheckDimensions />
             </>
           }
-          <Environment preset="city" />
+          <OrbitControls />
+          {/* <Environment
+            preset="warehouse"
+          /> */}
         </Canvas>
       </div>
     </div>
