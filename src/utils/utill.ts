@@ -102,3 +102,19 @@ export function resetToInitialView(
 
   gl.setClearColor(0x000000, 1);
 }
+
+// 캔버스에서 클릭한 이벤트만
+export const getCanvasTouch = (
+  touches: TouchList | MouseEvent
+): Touch | undefined => {
+  if (touches instanceof TouchList) {
+    return Array.from(touches).find(
+      (touch) =>
+        (touch.target as HTMLElement).tagName.toLowerCase() === "canvas"
+    );
+  } else {
+    return (touches.target as HTMLElement).tagName.toLowerCase() === "canvas"
+      ? (touches as unknown as Touch)
+      : undefined;
+  }
+};

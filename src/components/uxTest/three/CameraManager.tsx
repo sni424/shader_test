@@ -258,7 +258,7 @@ const CameraManager = () => {
 
         // 애니메이션 타입에 따른 처리
         let continueAnimation = false;
-        console.log("animationType", animationType)
+
         // 이동 처리
         switch (animationType) {
             case 'keyboard':

@@ -37,8 +37,9 @@ export const dotAtom = atom<{
 
 export const eventAtom = atom<boolean>(false);
 
-export const modelAtom = atom<THREE.Object3D[]>([]);
+export const modelArrayAtom = atom<THREE.Object3D[]>([]);
 
+export const modelAtom = atom<THREE.Object3D>();
 //초기 세팅값
 export const basicSettingAtom = atom<basicSettingType>({
   clipping: 10,
@@ -55,3 +56,7 @@ export const basicSettingAtom = atom<basicSettingType>({
     ],
   },
 });
+
+export const modalAtom = atom<boolean>(false);
+
+export const uiIndexAtom = atom<number>(1);

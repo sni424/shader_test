@@ -4,6 +4,7 @@ import * as THREE from "three"
 
 import ModelLoadHook from '../../hook/ModelLoadHook';
 import { resetToInitialView } from '../../utils/utill';
+import { modelAtom, setAtomValue } from '../../utils/atom';
 
 const modelArray: string[] = ["https://vra-configurator-dev.s3.ap-northeast-2.amazonaws.com/jonghyeok/kitchen.glb"];
 
@@ -22,7 +23,7 @@ const UxModelLoad = () => {
                 if (loadedScenes.length > 0) {
                     scene.add(loadedScenes[0]);
                     scene.background = null;
-
+                    setAtomValue(modelAtom, loadedScenes[0]);
                     setModel(true);
                 }
             } catch (error) {
