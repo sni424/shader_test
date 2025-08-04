@@ -1,0 +1,186 @@
+/* --- PopupMobile.css --- */
+/* 모든 클래스 이름 앞에 'mobile-' 접두사를 추가하여 PC 버전과의 충돌을 방지했습니다. */
+
+.mobile-background-div {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  background-color: rgba(58, 58, 60, 0.6);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  z-index: 16761431 !important;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.mobile-popup-wrapper {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  height: 80%;
+  /* 모바일 화면을 고려하여 최대 너비 추가 */
+  max-width: 420px;
+  padding: 0 1rem;
+}
+.mobile-popup-container {
+  background-color: rgba(255, 255, 255, 0.7);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 1.5rem;
+  box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+  overflow: hidden;
+  height: 100%;
+  display: flex; /* Flexbox 레이아웃으로 변경 */
+  flex-direction: column; /* 세로 정렬 */
+}
+
+/* --- 이미지 섹션 --- */
+.mobile-image-section {
+  position: relative;
+  background-color: rgba(255, 255, 255, 0.4);
+  height: 40%; /* 비율 조정 */
+  flex-shrink: 0; /* 높이가 줄어들지 않도록 */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.mobile-product-image {
+  width: 80%;
+  height: 70%;
+  object-fit: cover; /* 이미지가 잘리더라도 꽉 차게 */
+}
+.mobile-image-dots {
+  position: absolute;
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 0.5rem;
+}
+.mobile-dot {
+  display: block;
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 9999px;
+  background-color: rgba(255, 255, 255, 0.5);
+}
+.mobile-dot.active {
+  background-color: white;
+}
+.mobile-close-button {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 2.25rem;
+  height: 2.25rem;
+  background-color: rgba(0, 0, 0, 0.3);
+  border-radius: 9999px;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+}
+.mobile-close-button svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+/* --- 정보 섹션 --- */
+.mobile-info-section {
+  padding: 1rem; /* 패딩 조정 */
+  color: #1e293b;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1; /* 남은 공간을 모두 차지하도록 */
+  overflow-y: auto; /* 내용이 많으면 스크롤 */
+}
+.mobile-info-content-wrapper {
+  flex-grow: 1; /* 버튼을 제외한 콘텐츠가 공간을 채우도록 */
+}
+.mobile-category {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #0369a1;
+}
+.mobile-product-name {
+  font-size: 1.25rem; /* 모바일에 맞게 글자 크기 조정 */
+  font-weight: 700;
+  margin-top: 0.25rem;
+}
+.mobile-product-code {
+  font-size: 0.75rem;
+  color: #64748b;
+  margin-top: 0.25rem;
+}
+.mobile-features {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.mobile-feature-item {
+  display: flex;
+  align-items: center;
+  font-size: 0.875rem;
+}
+.mobile-feature-item svg {
+  width: 1.25rem;
+  height: 1.25rem;
+  color: #0284c7;
+  margin-right: 0.75rem;
+  flex-shrink: 0;
+}
+.mobile-price-section {
+  margin-top: 3rem;
+}
+.mobile-price-label {
+  font-size: 1rem;
+  color: #475569;
+  margin: 0;
+  padding: 0;
+}
+.mobile-price-amount {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0;
+  padding: 0;
+}
+.mobile-price-amount span {
+  font-size: 1.125rem;
+  font-weight: 500;
+}
+.mobile-button-group {
+  margin-top: 1rem;
+  display: flex;
+  gap: 1rem;
+  flex-shrink: 0; /* 버튼 그룹이 줄어들지 않도록 */
+}
+.mobile-button {
+  width: 100%;
+  padding: 0.875rem; /* 패딩 조정 */
+  border-radius: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+  font-size: 1rem;
+}
+.mobile-button-secondary {
+  background-color: #e2e8f0;
+  color: #334155;
+}
+.mobile-button-secondary:hover {
+  background-color: #cbd5e1;
+}
+.mobile-button-primary {
+  background-color: #0ea5e9;
+  color: white;
+  box-shadow: 0 10px 15px -3px rgb(14 165 233 / 0.2),
+    0 4px 6px -4px rgb(14 165 233 / 0.2);
+}
+.mobile-button-primary:hover {
+  background-color: #0369a1;
+}
